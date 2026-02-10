@@ -1,17 +1,14 @@
 <?php
-// 1. เชื่อมต่อ Database (เช็คชื่อ DB มึงด้วยว่าชื่ออะไร ถ้าชื่อ 'a_platform' ก็เปลี่ยนตามนั้น)
+// เชื่อมต่อ Database
 $conn = new mysqli("localhost", "root", "", "aplatform_db");
 mysqli_set_charset($conn, "utf8");
 
-// 2. รับค่า ID จาก URL (ถ้าไม่มี ID ส่งมา ให้เป็นอาชีพที่ 1 โดยอัตโนมัติ)
 $id = isset($_GET['id']) ? intval($_GET['id']) : 1; 
 
-// 3. ดึงข้อมูลจากตาราง jobs ตาม ID
 $sql = "SELECT * FROM jobs WHERE id = $id";
 $result = $conn->query($sql);
 $row = $result->fetch_assoc();
 
-// 4. ถ้าไม่พบข้อมูล (เช่น ใส่ ID มั่ว) ให้เด้งกลับหน้าหลัก
 if(!$row) {
     header("Location: P1.php");
     exit();
@@ -26,136 +23,71 @@ if(!$row) {
     <title>Job Insight - <?php echo $row['title']; ?></title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;700;800&display=swap" rel="stylesheet">
-    
     <style>
-        body { font-family: 'Sarabun', sans-serif; margin: 0; background-color: #fcfcfc; color: #333; }
-        .header-accent { height: 8px; background: #B1081C; width: 100%; }
-        .content-card {
-            background: white;
-            border-left: 12px solid #B1081C; 
-            box-shadow: 0 10px 30px rgba(0,0,0,0.03);
-            border-radius: 0 1rem 1rem 0;
-        }
-        .btn-back {
-            transition: all 0.3s ease;
-            border: 2px solid #B1081C;
-            color: #B1081C;
-        }
-        .btn-back:hover {
-            background-color: #B1081C;
-            color: white;
-            transform: translateX(-5px);
-        }
-        .screen-fade { 
-            opacity: 0; 
-            transform: translateX(-20px); 
-            transition: opacity 0.6s ease-out, transform 0.6s ease-out; 
-        }
-        .screen-fade.active { opacity: 1; transform: translateX(0); }
-
-        /* Footer Styles (มึงทำมาดีมาก กูกองไว้ให้ข้างล่าง) */
-        .ultra-footer { background: #0a0a0a; padding: 100px 0; font-family: 'Sarabun', sans-serif; }
-        .smooth-wrapper { display: flex; width: 100%; height: 480px; gap: 15px; align-items: stretch; }
-        .smooth-panel { position: relative; flex: 1; background: #111; border-radius: 30px; overflow: hidden; transition: all 0.7s cubic-bezier(0.23, 1, 0.32, 1); border: 1px solid rgba(255, 255, 255, 0.03); }
-        .smooth-wrapper .smooth-panel:hover { flex: 2.5; background: #161616; border-color: rgba(177, 8, 28, 0.3); }
-        .bg-number { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 140px; font-weight: 900; color: rgba(255, 255, 255, 0.02); transition: all 0.6s; z-index: 1; }
-        .smooth-panel:hover .bg-number { color: rgba(177, 8, 28, 0.08); }
-        .title-box { position: absolute; top: 50%; left: -100%; transform: translateY(-50%); transition: all 0.6s; z-index: 2; padding-left: 50px; width: 100%; }
-        .smooth-panel:hover .title-box { left: 0; }
-        .inner-title { font-size: 38px; font-weight: 800; color: #B1081C; text-transform: uppercase; margin-bottom: 20px; }
-        .footer-sub-links { list-style: none; padding: 0; opacity: 0; transition: 0.5s 0.3s; }
-        .smooth-panel:hover .footer-sub-links { opacity: 1; }
-        .footer-sub-links a { color: #888; text-decoration: none; font-size: 16px; transition: 0.3s; }
-        .footer-sub-links a:hover { color: #fff; transform: translateX(10px); display: inline-block; }
+        body { font-family: 'Sarabun', sans-serif; background-color: #fcfcfc; color: #333; }
+        .header-accent { height: 8px; background: #B1081C; }
+        .content-card { background: white; border-left: 12px solid #B1081C; border-radius: 0 1rem 1rem 0; box-shadow: 0 10px 30px rgba(0,0,0,0.03); }
     </style>
 </head>
 <body>
-
     <div class="header-accent"></div>
-    <header class="w-full bg-white border-b border-gray-100 h-20 flex items-center px-10 justify-between sticky top-0 z-50">
-        <div class="flex items-center space-x-12">
-            <div class="w-10 h-10 bg-[#B1081C] rounded flex items-center justify-center font-black text-white text-xl">A</div>
-            <nav class="flex space-x-8 text-[14px] font-bold text-gray-400">
-                <a href="index.php" class="hover:text-[#B1081C] transition">หน้าหลัก</a>
-                <a href="P1.php" class="text-[#B1081C]">หมวดหมู่การหางาน</a>
-                <a href="P2.php" class="hover:text-[#B1081C] transition">มหาวิทยาลัยในไทย</a>
-            </nav>
-        </div>
-    </header>
-
-    <main class="max-w-[1000px] mx-auto px-10 py-16 text-left">
-        <div class="mb-10 screen-fade">
-            <h1 class="text-5xl font-extrabold text-[#1a1a1a] mt-6 tracking-tighter uppercase"><?php echo $row['title']; ?></h1>
-            <p class="text-[#B1081C] font-bold mt-2 tracking-[2px] text-sm uppercase">ข้อมูลเจาะลึกสายอาชีพ (<?php echo $row['category']; ?>)</p>
+    <main class="max-w-[1000px] mx-auto px-10 py-16">
+        <div class="mb-10">
+            <h1 class="text-5xl font-extrabold text-[#1a1a1a] uppercase"><?php echo $row['title']; ?></h1>
+            <p class="text-[#B1081C] font-bold mt-2 uppercase">ข้อมูลเจาะลึกสายอาชีพ (<?php echo $row['job_category']; ?>)</p>
         </div>
 
-        <div class="content-card p-12 screen-fade">
+        <div class="content-card p-12">
             <div class="space-y-12">
                 <section>
-                    <div class="flex items-center mb-6">
-                        <span class="text-2xl font-black text-[#B1081C]/20 mr-4">01</span>
-                        <h2 class="text-xl font-extrabold text-[#1a1a1a] uppercase tracking-wide">บทบาทและความสำคัญ</h2>
-                    </div>
+                    <h2 class="text-xl font-extrabold text-[#1a1a1a] mb-6 uppercase">01 บทบาทและความสำคัญ</h2>
                     <div class="text-gray-600 leading-[1.9] pl-12">
                         <p><?php echo nl2br($row['description']); ?></p>
                     </div>
                 </section>
 
                 <section>
-                    <div class="flex items-center mb-6">
-                        <span class="text-2xl font-black text-[#B1081C]/20 mr-4">02</span>
-                        <h2 class="text-xl font-extrabold text-[#1a1a1a] uppercase tracking-wide">ค่าตอบแทนโดยประมาณ</h2>
-                    </div>
-                    <div class="pl-12">
-                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                            <div class="p-4 bg-gray-50 rounded-lg border-l-4 border-gray-200">
-                                <p class="text-[10px] text-gray-400 font-bold uppercase">Entry Level</p>
-                                <p class="text-lg font-bold"><?php echo $row['salary_jr']; ?> ฿</p>
-                            </div>
-                            <div class="p-4 bg-gray-50 rounded-lg border-l-4 border-[#B1081C]">
-                                <p class="text-[10px] text-[#B1081C] font-bold uppercase">Experience</p>
-                                <p class="text-lg font-bold"><?php echo $row['salary_sr']; ?> ฿</p>
-                            </div>
-                            <div class="p-4 bg-gray-50 rounded-lg border-l-4 border-gray-200">
-                                <p class="text-[10px] text-gray-400 font-bold uppercase">Expert Level</p>
-                                <p class="text-lg font-bold"><?php echo $row['salary_exp']; ?> ฿</p>
-                            </div>
+                    <h2 class="text-xl font-extrabold text-[#1a1a1a] mb-6 uppercase">02 ค่าตอบแทนโดยประมาณ</h2>
+                    <div class="pl-12 grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div class="p-4 bg-gray-50 rounded-lg border-l-4 border-gray-200">
+                            <p class="text-[10px] font-bold uppercase">Entry Level</p>
+                            <p class="text-lg font-bold"><?php echo number_format($row['sal_jr'] ?? 0); ?> ฿</p>
+                        </div>
+                        <div class="p-4 bg-gray-50 rounded-lg border-l-4 border-[#B1081C]">
+                            <p class="text-[10px] font-bold uppercase text-[#B1081C]">Experience</p>
+                            <p class="text-lg font-bold"><?php echo number_format($row['sal_sr'] ?? 0); ?> ฿</p>
+                        </div>
+                        <div class="p-4 bg-gray-50 rounded-lg border-l-4 border-gray-200">
+                            <p class="text-[10px] font-bold uppercase">Expert Level</p>
+                            <p class="text-lg font-bold"><?php echo number_format($row['sal_exp'] ?? 0); ?> ฿</p>
                         </div>
                     </div>
                 </section>
 
                 <section>
-                    <div class="flex items-center mb-6">
-                        <span class="text-2xl font-black text-[#B1081C]/20 mr-4">03</span>
-                        <h2 class="text-xl font-extrabold text-[#1a1a1a] uppercase tracking-wide">Essential Skills</h2>
-                    </div>
-                    <div class="pl-12 grid grid-cols-1 md:grid-cols-2 gap-8 text-sm leading-relaxed text-gray-600">
-                        <div class="space-y-3">
+                    <h2 class="text-xl font-extrabold text-[#1a1a1a] mb-6 uppercase">03 Essential Skills</h2>
+                    <div class="pl-12 grid grid-cols-1 md:grid-cols-2 gap-8 text-gray-600">
+                        <div>
                             <p class="font-bold text-[#1a1a1a]">Hard Skills:</p>
-                            <p><?php echo nl2br($row['hard_skills']); ?></p>
+                            <p><?php echo nl2br($row['h_skill']); ?></p>
                         </div>
-                        <div class="space-y-3">
+                        <div>
                             <p class="font-bold text-[#1a1a1a]">Soft Skills:</p>
-                            <p><?php echo nl2br($row['soft_skills']); ?></p>
+                            <p><?php echo nl2br($row['s_skill']); ?></p>
                         </div>
                     </div>
                 </section>
 
                 <section class="pt-10 border-t border-gray-100 pl-12">
-                    <h2 class="text-sm font-bold text-[#B1081C] mb-3 uppercase tracking-widest">Future Outlook</h2>
-                    <p class="text-gray-500 text-sm leading-relaxed mb-8">
-                        <?php echo nl2br($row['future_trend']); ?>
-                    </p>
-                   <a href="P1.php?all=true#job-<?php echo $id; ?>" 
-   class="btn-back px-8 py-3 rounded font-bold text-xs uppercase tracking-widest">
-   ย้อนกลับ
-</a>
+                    <h2 class="text-sm font-bold text-[#B1081C] mb-3 uppercase">Future Outlook</h2>
+                    <p class="text-gray-500 text-sm mb-8"><?php echo nl2br($row['future']); ?></p>
+                    <a href="P1.php" class="border-2 border-[#B1081C] text-[#B1081C] px-8 py-3 rounded font-bold text-xs uppercase hover:bg-[#B1081C] hover:text-white transition">ย้อนกลับ</a>
                 </section>
             </div>
         </div>
     </main>
-
-   <style>
+</body>
+<style>
     /* คอนเทนเนอร์หลัก */
     .ultra-footer {
         background: #0a0a0a;
@@ -645,14 +577,4 @@ if(!$row) {
         </div>
     </div>
 </footer>
-
-    <script>
-        document.addEventListener("DOMContentLoaded", function() {
-            const elements = document.querySelectorAll('.screen-fade');
-            elements.forEach((el, index) => {
-                setTimeout(() => { el.classList.add('active'); }, index * 150);
-            });
-        });
-    </script>
-</body>
 </html>

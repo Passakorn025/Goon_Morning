@@ -1,3 +1,29 @@
+<?php
+include 'connect.php'; 
+
+// 1. รับค่า id สาขาจาก URL
+$id = isset($_GET['id']) ? intval($_GET['id']) : 0;
+
+// 2. SQL JOIN 3 ตาราง (แก้จาก major_id เป็น id ตามรูป DB มึง)
+// ใช้ majors.* เพื่อดึงทุกคอลัมน์จากตาราง majors มาให้หมด
+$sql = "SELECT majors.*, faculties.fac_name, universities.uni_name 
+        FROM majors 
+        LEFT JOIN faculties ON majors.fac_id = faculties.id 
+        LEFT JOIN universities ON faculties.uni_id = universities.uni_id 
+        WHERE majors.id = ?";
+
+$stmt = $conn->prepare($sql);
+$stmt->bind_param("i", $id);
+$stmt->execute();
+$result = $stmt->get_result();
+$row = $result->fetch_assoc();
+
+// 3. ถ้าไม่เจอข้อมูล ให้แจ้งเตือน
+if (!$row) {
+    echo "<script>alert('ไม่พบข้อมูลสาขาวิชา ID: $id'); window.location.href='P2.php';</script>";
+    exit();
+}
+?>
 <!DOCTYPE html>
 <html lang="th">
 <head>
@@ -16,7 +42,7 @@
 
     <nav class="w-full bg-white/80 backdrop-blur-md border-b sticky top-0 z-50 px-10 py-4 flex justify-between items-center">
         <div class="flex items-center space-x-4">
-            <div class="w-8 h-8 bg-[#B1081C] rounded shadow-lg shadow-[#B1081C]/30 flex items-center justify-center text-white font-black">A</div>
+            <a href="index.php" class="w-10 h-10 bg-[#B1081C] rounded-lg flex items-center justify-center font-black text-white text-xl">A</a>
             <span class="font-bold text-sm tracking-tighter">ADMISSION</span>
         </div>
         <a href="P2.php" class="text-xs font-bold text-gray-400 hover:text-[#B1081C] transition">← ย้อนกลับไปหน้ามหาลัย</a>
@@ -26,161 +52,183 @@
         
         <div class="flex flex-col md:flex-row gap-10 items-end mb-16">
             <div class="flex-1">
-                <span class="px-3 py-1 bg-[#B1081C]/10 text-[#B1081C] text-[10px] font-bold rounded-full uppercase tracking-widest">Faculty of Engineering</span>
-                <h1 class="text-5xl font-extrabold mt-4 leading-tight">วิศวกรรมคอมพิวเตอร์ <br><span class="gradient-text">จุฬาลงกรณ์มหาวิทยาลัย</span></h1>
-                <p class="mt-6 text-gray-500 max-w-lg leading-relaxed">มุ่งเน้นการสร้างนวัตกรรมด้านซอฟต์แวร์, AI และระบบเครือข่าย เพื่อตอบโจทย์อุตสาหกรรมเทคโนโลยีระดับโลก</p>
+                <span class="px-3 py-1 bg-[#B1081C]/10 text-[#B1081C] text-[10px] font-bold rounded-full uppercase tracking-widest"><?= $row['fac_name'] ?></span>
+                <h1 class="text-5xl font-extrabold mt-4 leading-tight">
+    <?= $row['major_name'] ?> <br>
+    <span class="gradient-text"><?= $row['uni_name'] ?></span>
+</h1>
+<p class="mt-6 text-gray-500 max-w-lg leading-relaxed">
+    <?= $row['major_description'] ?>
+</p>
+</p>
+</p>
+    </div> <div class="flex gap-4">
+            <div class="text-center px-8 py-4 bg-white border rounded-3xl shadow-sm">
+                <p class="text-[10px] text-gray-400 font-bold uppercase">รับสมัครรอบที่</p>
+                <p class="text-2xl font-black text-[#B1081C]"><?= $row['round_open'] ?? '1' ?></p>
             </div>
-            <div class="flex gap-4">
-                <div class="text-center px-8 py-4 bg-white border rounded-3xl shadow-sm">
-                    <p class="text-[10px] text-gray-400 font-bold uppercase">รับสมัครรอบที่</p>
-                    <p class="text-2xl font-black text-[#B1081C]">1</p>
-                </div>
-                <div class="text-center px-8 py-4 bg-[#1a1a1a] text-white rounded-3xl shadow-xl">
-                    <p class="text-[10px] text-gray-400 font-bold uppercase">จำนวนที่รับ</p>
-                    <p class="text-2xl font-black text-white">120 <span class="text-xs font-light">ที่นั่ง</span></p>
-                </div>
+            <div class="text-center px-8 py-4 bg-[#1a1a1a] text-white rounded-3xl shadow-xl">
+                <p class="text-[10px] text-gray-400 font-bold uppercase">จำนวนที่รับ</p>
+                <p class="text-2xl font-black text-white"><?= $row['seats'] ?> <span class="text-xs font-light">ที่นั่ง</span></p>
+            </div>
+        </div>
+    </div> <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16">
+        <div class="bg-white p-8 rounded-[2rem] border border-gray-100 shadow-xl shadow-gray-50 flex flex-col justify-between group relative overflow-hidden">
+            <div class="absolute -right-6 -top-6 w-24 h-24 bg-[#B1081C]/5 rounded-full group-hover:scale-150 transition-transform duration-700"></div>
+            <div>
+                <h3 class="text-lg font-bold mb-6 flex items-center">
+                    <span class="w-2 h-2 bg-[#B1081C] rounded-full mr-3"></span> คุณสมบัติผู้สมัคร
+                </h3>
+                <ul class="space-y-4">
+                    <li class="flex flex-col">
+                        <span class="text-[10px] text-gray-400 font-bold uppercase">แผนการเรียนที่รับ</span>
+                        <span class="text-sm font-bold text-gray-700"><?= $row['plan_accept'] ?? 'ไม่ระบุ' ?></span>
+                    </li>
+                    <li class="flex flex-col">
+                        <span class="text-[10px] text-gray-400 font-bold uppercase">เกรดเฉลี่ย (GPAX)</span>
+                        <span class="text-2xl font-black tracking-tighter text-[#1a1a1a]"><?= $row['gpax_min'] ?>+</span>
+                    </li>
+                </ul>
+            </div>
+            <div class="mt-8 p-4 bg-gray-50 rounded-2xl border-l-4 border-amber-400">
+                <p class="text-[10px] text-amber-600 font-bold uppercase">Condition</p>
+                <p class="text-[11px] text-gray-500 leading-tight"><?= $row['condition_text'] ?? 'สำเร็จการศึกษา ม.6 หรือเทียบเท่า' ?></p>
             </div>
         </div>
 
-       <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16">
-            
-            <div class="bg-white p-8 rounded-[2rem] border border-gray-100 shadow-xl shadow-gray-50 flex flex-col justify-between group relative overflow-hidden">
-                <div class="absolute -right-6 -top-6 w-24 h-24 bg-[#B1081C]/5 rounded-full group-hover:scale-150 transition-transform duration-700"></div>
+        <div class="bg-white p-8 rounded-[2rem] border border-gray-100 shadow-xl shadow-gray-50 md:col-span-2">
+            <div class="flex justify-between items-center mb-8">
+                <h3 class="text-lg font-bold flex items-center">
+                    <span class="w-2 h-2 bg-[#B1081C] rounded-full mr-3"></span> สัดส่วนคะแนน (Admission 2569)
+                </h3>
+                <span class="text-[10px] font-black bg-gray-100 px-3 py-1 rounded-full text-gray-500">TOTAL 100%</span>
+            </div>
+
+            <div class="space-y-6">
                 <div>
-                    <h3 class="text-lg font-bold mb-6 flex items-center">
-                        <span class="w-2 h-2 bg-[#B1081C] rounded-full mr-3"></span> คุณสมบัติผู้สมัคร
-                    </h3>
-                    <ul class="space-y-4">
-                        <li class="flex flex-col">
-                            <span class="text-[10px] text-gray-400 font-bold uppercase">แผนการเรียนที่รับ</span>
-                            <span class="text-sm font-bold text-gray-700">วิทย์-คณิต / ศิลป์-คำนวณ</span>
-                        </li>
-                        <li class="flex flex-col">
-                            <span class="text-[10px] text-gray-400 font-bold uppercase">เกรดเฉลี่ย (GPAX)</span>
-                            <span class="text-2xl font-black tracking-tighter text-[#1a1a1a]">3.25+</span>
-                        </li>
-                    </ul>
-                </div>
-                <div class="mt-8 p-4 bg-gray-50 rounded-2xl border-l-4 border-amber-400">
-                    <p class="text-[10px] text-amber-600 font-bold uppercase">Condition</p>
-                    <p class="text-[11px] text-gray-500 leading-tight">ต้องสำเร็จการศึกษาระดับ ม.6 หรือเทียบเท่า (GED รับพิจารณา)</p>
-                </div>
-            </div>
-
-            <div class="bg-white p-8 rounded-[2rem] border border-gray-100 shadow-xl shadow-gray-50 md:col-span-2">
-                <div class="flex justify-between items-center mb-8">
-                    <h3 class="text-lg font-bold flex items-center">
-                        <span class="w-2 h-2 bg-[#B1081C] rounded-full mr-3"></span> สัดส่วนคะแนน (Admission 2569)
-                    </h3>
-                    <span class="text-[10px] font-black bg-gray-100 px-3 py-1 rounded-full text-gray-500">TOTAL 100%</span>
-                </div>
-
-                <div class="space-y-6">
-                    <div>
-                        <div class="flex justify-between text-sm mb-2">
-                            <span class="font-bold text-gray-600">TGAT (ความถนัดทั่วไป)</span>
-                            <span class="font-black text-[#B1081C]">20%</span>
-                        </div>
-                        <div class="w-full bg-gray-50 h-2.5 rounded-full overflow-hidden border border-gray-100">
-                            <div class="bg-gradient-to-r from-[#B1081C] to-[#ff4d5a] h-full rounded-full" style="width: 20%"></div>
-                        </div>
+                    <div class="flex justify-between text-sm mb-2">
+                        <span class="font-bold text-gray-600">TGAT (ความถนัดทั่วไป)</span>
+                        <span class="font-black text-[#B1081C]"><?= $row['score_tgat'] ?>%</span>
                     </div>
-
-                    <div>
-                        <div class="flex justify-between text-sm mb-2">
-                            <span class="font-bold text-gray-600">TPAT 3 (ความถนัดด้านวิทย์-วิศวะ)</span>
-                            <span class="font-black text-[#B1081C]">30%</span>
-                        </div>
-                        <div class="w-full bg-gray-50 h-2.5 rounded-full overflow-hidden border border-gray-100">
-                            <div class="bg-gradient-to-r from-[#B1081C] to-[#ff4d5a] h-full rounded-full" style="width: 30%"></div>
-                        </div>
-                    </div>
-
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div>
-                            <div class="flex justify-between text-[11px] mb-2 font-bold text-gray-500 uppercase">
-                                <span>A-Level (คณิต 1)</span>
-                                <span>25%</span>
-                            </div>
-                            <div class="w-full bg-gray-50 h-1.5 rounded-full border border-gray-100">
-                                <div class="bg-gray-400 h-full rounded-full" style="width: 25%"></div>
-                            </div>
-                        </div>
-                        <div>
-                            <div class="flex justify-between text-[11px] mb-2 font-bold text-gray-500 uppercase">
-                                <span>A-Level (ฟิสิกส์)</span>
-                                <span>25%</span>
-                            </div>
-                            <div class="w-full bg-gray-50 h-1.5 rounded-full border border-gray-100">
-                                <div class="bg-gray-400 h-full rounded-full" style="width: 25%"></div>
-                            </div>
-                        </div>
+                    <div class="w-full bg-gray-50 h-2.5 rounded-full overflow-hidden border border-gray-100">
+                        <div class="bg-gradient-to-r from-[#B1081C] to-[#ff4d5a] h-full rounded-full transition-all duration-1000" style="width: <?= $row['score_tgat'] ?>%;"></div>
                     </div>
                 </div>
-                
-                <p class="mt-8 text-[10px] text-gray-400 italic text-center">
-                    * ข้อมูลนี้เป็นการจำลองเกณฑ์เพื่อใช้ในการออกแบบเท่านั้น โปรดตรวจสอบประกาศทางการอีกครั้ง
-                </p>
-            </div>
-        </div>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
-            <div class="space-y-8">
+
                 <div>
-                    <h2 class="text-3xl font-black mb-4">ต้องเตรียมตัวยังไง?</h2>
-                    <p class="text-gray-500 leading-relaxed">สำหรับน้องๆ ที่สนใจเข้าสาขานี้ นอกจากการอ่านหนังสือสอบแล้ว การมี "Portfolio" ที่แสดงถึงทักษะเฉพาะด้านจะช่วยให้มีโอกาสติดรอบที่ 1 มากขึ้น</p>
-                </div>
-                
-                <div class="space-y-4">
-                    <div class="flex items-start space-x-4">
-                        <div class="w-10 h-10 shrink-0 bg-[#B1081C] rounded-xl flex items-center justify-center text-white font-bold">1</div>
-                        <div>
-                            <p class="font-bold">เน้นวิชาคณิตศาสตร์และฟิสิกส์</p>
-                            <p class="text-sm text-gray-500">เป็นพื้นฐานสำคัญในการคำนวณอัลกอริทึมและโครงสร้างระบบ</p>
-                        </div>
+                    <div class="flex justify-between text-sm mb-2">
+                        <span class="font-bold text-gray-600">TPAT 3 (ความถนัดด้านวิทย์-วิศวะ)</span>
+                        <span class="font-black text-[#B1081C]"><?= $row['score_tpat3'] ?>%</span>
                     </div>
-                    <div class="flex items-start space-x-4">
-                        <div class="w-10 h-10 shrink-0 bg-[#1a1a1a] rounded-xl flex items-center justify-center text-white font-bold">2</div>
-                        <div>
-                            <p class="font-bold">ฝึกเขียนโปรแกรมเบื้องต้น</p>
-                            <p class="text-sm text-gray-500">Python, C++ หรือ Java จะช่วยให้มึงเข้าใจตรรกะการคิด (Logic)</p>
-                        </div>
+                    <div class="w-full bg-gray-50 h-2.5 rounded-full overflow-hidden border border-gray-100">
+                        <div class="bg-gradient-to-r from-[#B1081C] to-[#ff4d5a] h-full rounded-full transition-all duration-1000" style="width: <?= $row['score_tpat3'] ?>%;"></div>
                     </div>
                 </div>
-            </div>
 
-            <div class="bg-[#1a1a1a] p-8 rounded-[3rem] text-white relative overflow-hidden">
-    <h4 class="text-[#B1081C] font-black tracking-widest text-[10px] uppercase mb-4">Career Projection</h4>
-    <h3 class="text-xl font-bold mb-8">โอกาสในการประกอบอาชีพ</h3>
-    
-    <div class="space-y-8">
-        <div>
-            <div class="flex justify-between items-end mb-2">
-                <span class="text-sm font-bold text-gray-300">ความต้องการในตลาดแรงงาน</span>
-                <span class="text-2xl font-black text-[#B1081C]">High</span>
-            </div>
-            <div class="w-full bg-white/5 h-2 rounded-full overflow-hidden">
-                <div class="bg-gradient-to-r from-[#B1081C] to-[#ff4d5a] h-full" style="width: 85%"></div>
-            </div>
-        </div>
+                <div>
+                    <div class="flex justify-between text-sm mb-2">
+                        <span class="font-bold text-gray-600">A-Level</span>
+                        <span class="font-black text-[#B1081C]"><?= $row['score_tpat3'] ?>%</span>
+                    </div>
+                    <div class="w-full bg-gray-50 h-2.5 rounded-full overflow-hidden border border-gray-100">
+                        <div class="bg-gradient-to-r from-[#B1081C] to-[#ff4d5a] h-full rounded-full transition-all duration-1000" style="width: <?= $row['score_tpat3'] ?>%;"></div>
+                    </div>
+                </div>
 
-        <div class="grid grid-cols-2 gap-4">
-            <div class="p-4 bg-white/5 rounded-2xl border border-white/10">
-                <p class="text-[10px] text-gray-500 uppercase font-bold">รายได้เฉลี่ยเริ่มต้น</p>
-                <p class="text-xl font-black">25,000 - 45,000</p>
-            </div>
-            <div class="p-4 bg-white/5 rounded-2xl border border-white/10">
-                <p class="text-[10px] text-gray-500 uppercase font-bold">อัตราการได้งาน</p>
-                <p class="text-xl font-black">98.5%</p>
+                       <div>
+                    <div class="flex justify-between text-sm mb-2">
+                        <span class="font-bold text-gray-600">A-Level</span>
+                        <span class="font-black text-[#B1081C]"><?= $row['score_tpat3'] ?>%</span>
+                    </div>
+                    <div class="w-full bg-gray-50 h-2.5 rounded-full overflow-hidden border border-gray-100">
+                        <div class="bg-gradient-to-r from-[#B1081C] to-[#ff4d5a] h-full rounded-full transition-all duration-1000" style="width: <?= $row['score_tpat3'] ?>%;"></div>
+                    </div>
+                </div>
+
+                       
+                            <div class="bg-gray-400 h-full rounded-full transition-all duration-1000" style="width: <?= $row['score_alevel_phy'] ?>%;"></div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
+        <div class="space-y-8">
+            <div>
+                <h2 class="text-3xl font-black mb-4">ต้องเตรียมตัวยังไง?</h2>
+                <p class="text-gray-500 leading-relaxed">สำหรับน้องๆ ที่สนใจเข้าสาขานี้...</p>
+            </div>
+            
+            <div class="space-y-4">
+                <div class="flex items-start space-x-4">
+                    <div class="w-10 h-10 shrink-0 bg-[#B1081C] rounded-xl flex items-center justify-center text-white font-bold">1</div>
+                    <div>
+                        <p class="font-bold">คณิตศาสตร์และฟิสิกส์</p>
+                        <p class="text-sm text-gray-500"><?= $row['prep_math_text'] ?: 'ไม่มีข้อมูลข้อแนะนำ' ?></p>
+                    </div>
+                </div>
+                <div class="flex items-start space-x-4">
+                    <div class="w-10 h-10 shrink-0 bg-[#1a1a1a] rounded-xl flex items-center justify-center text-white font-bold">2</div>
+                    <div>
+                        <p class="font-bold">ทักษะโปรแกรมมิ่ง / Logic</p>
+                        <p class="text-sm text-gray-500"><?= $row['prep_prog_text'] ?: 'ไม่มีข้อมูลข้อแนะนำ' ?></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+       <div class="bg-[#1a1a1a] p-8 rounded-[3rem] text-white relative overflow-hidden">
+    <h4 class="text-[#B1081C] font-black tracking-widest text-[10px] uppercase mb-4">Career Projection</h4>
+    <h3 class="text-xl font-bold mb-8">โอกาสในการประกอบอาชีพ</h3>
     
-    <div class="absolute -bottom-6 -right-6 text-white/5 text-8xl font-black italic">GROWTH</div>
+   <?php 
+  // แก้ชื่อคอลัมน์ให้ตรง DB และลบเงา (shadow) ออก
+  $demand = $row['career_demand'] ?? 'กลาง'; 
+  
+  if ($demand == 'สูง' || $demand == 'สูงมาก') { 
+      $w = '100%'; 
+      $c = 'bg-emerald-500'; // ลบ shadow ออกแล้ว เหลือแค่สีเขียวเพียวๆ
+      $txt = 'สูงที่สุด'; 
+  } elseif ($demand == 'กลาง') { 
+      $w = '50%';  
+      $c = 'bg-yellow-500'; 
+      $txt = 'ปานกลาง';
+  } else { 
+      $w = '25%';  
+      $c = 'bg-red-500'; 
+      $txt = 'ต่ำ';
+  }
+?>
+
+<p class="text-xl font-black"><?= $row['career_salary'] ?: 'ไม่ระบุ' ?></p>
+<p class="text-xl font-black"><?= $row['career_job_rate'] ?: 'ไม่ระบุ' ?></p>
+
+    <div class="mt-6 p-5 bg-white rounded-3xl border border-gray-100 shadow-sm mb-6">
+        <div class="flex justify-between items-center mb-3">
+            <span class="text-xs font-black uppercase tracking-widest text-gray-400">Market Demand</span>
+            <span class="text-sm font-bold text-gray-800"><?= $txt ?></span>
+        </div>
+        <div class="w-full bg-gray-100 rounded-full h-4 p-1">
+            <div class="<?= $c ?> h-full rounded-full transition-all duration-1000" style="width: <?= $w ?>;"></div>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-2 gap-4">
+        <div class="p-4 bg-white/5 rounded-2xl border border-white/10">
+            <p class="text-[10px] text-gray-500 uppercase font-bold">รายได้เฉลี่ยเริ่มต้น</p>
+            <p class="text-xl font-black"><?= $row['career_salary'] ?: 'ไม่ระบุ' ?></p>
+        </div>
+        <div class="p-4 bg-white/5 rounded-2xl border border-white/10">
+            <p class="text-[10px] text-gray-500 uppercase font-bold">อัตราการได้งาน</p>
+            <p class="text-xl font-black"><?= $row['career_job_rate'] ?: 'ไม่ระบุ' ?></p>
+        </div>
+    </div>
 </div>
 
     </main>
 
-   <style>
+    <style>
     /* คอนเทนเนอร์หลัก */
     .ultra-footer {
         background: #0a0a0a;

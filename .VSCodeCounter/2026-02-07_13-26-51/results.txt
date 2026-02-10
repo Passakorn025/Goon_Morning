@@ -1,0 +1,45 @@
+Date : 2026-02-07 13:26:51
+Directory : e:\xampp\htdocs\EDU
+Total : 21 files,  3816 codes, 218 comments, 509 blanks, all 4543 lines
+
+Languages
++----------+------------+------------+------------+------------+------------+
+| language | files      | code       | comment    | blank      | total      |
++----------+------------+------------+------------+------------+------------+
+| PHP      |         21 |      3,816 |        218 |        509 |      4,543 |
++----------+------------+------------+------------+------------+------------+
+
+Directories
++-----------------------------------------+------------+------------+------------+------------+------------+
+| path                                    | files      | code       | comment    | blank      | total      |
++-----------------------------------------+------------+------------+------------+------------+------------+
+| .                                       |         21 |      3,816 |        218 |        509 |      4,543 |
++-----------------------------------------+------------+------------+------------+------------+------------+
+
+Files
++-----------------------------------------+----------+------------+------------+------------+------------+
+| filename                                | language | code       | comment    | blank      | total      |
++-----------------------------------------+----------+------------+------------+------------+------------+
+| e:\xampp\htdocs\EDU\Adminlogin.php      | PHP      |        108 |          0 |         16 |        124 |
+| e:\xampp\htdocs\EDU\Index.php           | PHP      |        601 |         35 |         84 |        720 |
+| e:\xampp\htdocs\EDU\P1.php              | PHP      |        544 |         35 |         69 |        648 |
+| e:\xampp\htdocs\EDU\P13.php             | PHP      |        483 |         33 |         64 |        580 |
+| e:\xampp\htdocs\EDU\P2.php              | PHP      |        553 |         37 |         83 |        673 |
+| e:\xampp\htdocs\EDU\P21.php             | PHP      |        103 |          6 |         11 |        120 |
+| e:\xampp\htdocs\EDU\P21_detail.php      | PHP      |        592 |         34 |         78 |        704 |
+| e:\xampp\htdocs\EDU\admin.php           | PHP      |        394 |          8 |         36 |        438 |
+| e:\xampp\htdocs\EDU\admin_edit_card.php | PHP      |         54 |          3 |         14 |         71 |
+| e:\xampp\htdocs\EDU\admin_edit_uni.php  | PHP      |        132 |          4 |         15 |        151 |
+| e:\xampp\htdocs\EDU\config.php          | PHP      |         11 |          0 |          2 |         13 |
+| e:\xampp\htdocs\EDU\delete_job.php      | PHP      |         10 |          1 |          2 |         13 |
+| e:\xampp\htdocs\EDU\delete_uni.php      | PHP      |         16 |          3 |          3 |         22 |
+| e:\xampp\htdocs\EDU\edit_form.php       | PHP      |         51 |          5 |          9 |         65 |
+| e:\xampp\htdocs\EDU\get_faculties.php   | PHP      |         21 |          4 |          5 |         30 |
+| e:\xampp\htdocs\EDU\insert_job.php      | PHP      |         31 |          2 |          7 |         40 |
+| e:\xampp\htdocs\EDU\job_detail.php      | PHP      |         43 |          0 |          3 |         46 |
+| e:\xampp\htdocs\EDU\real_delete.php     | PHP      |         19 |          3 |          3 |         25 |
+| e:\xampp\htdocs\EDU\restore_job.php     | PHP      |         10 |          1 |          2 |         13 |
+| e:\xampp\htdocs\EDU\restore_uni.php     | PHP      |          8 |          0 |          0 |          8 |
+| e:\xampp\htdocs\EDU\save_update.php     | PHP      |         32 |          4 |          3 |         39 |
+| Total                                   |          |      3,816 |        218 |        509 |      4,543 |
++-----------------------------------------+----------+------------+------------+------------+------------+

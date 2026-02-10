@@ -1,5 +1,6 @@
 <?php
 include 'connect.php';
+// ดึงข้อมูลโดยเช็คว่ายังไม่ถูกลบ (is_deleted = 0)
 $sql = "SELECT * FROM jobs WHERE is_deleted = 0 ORDER BY id ASC"; 
 $result = $conn->query($sql); 
 if (!$result) {
@@ -14,7 +15,6 @@ if (!$result) {
     <title>Job Board - A Platform</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;700;800&display=swap" rel="stylesheet">
-    
     <style>
         body { font-family: 'Sarabun', sans-serif; margin: 0; background-color: #f5f5f5; }
         .hero-banner { display: flex; height: 380px; width: 100%; background: white; position: relative; overflow: hidden; }
@@ -26,48 +26,21 @@ if (!$result) {
         }
         .job-card { transition: all 0.2s ease-in-out; border: 1px solid rgba(0,0,0,0.05); }
         .job-card:hover { border-color: #B1081C; box-shadow: 0 10px 20px rgba(0, 0, 0, 0.05); }
-        
-        /* สไตล์สำหรับปุ่มเพิ่มเติมที่มึงขอ */
-        .job-card.hidden-card { display: none; } /* ซ่อนการ์ดที่ยังไม่ถึงคิว */
-        
+        .hidden-card { display: none !important; } 
         .btn-apply { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); background-color: #B1081C; }
-        .btn-apply:hover {
-            background-color: #8e0616;
-            transform: translateY(-3px);
-            box-shadow: 0 10px 15px -3px rgba(177, 8, 28, 0.4);
-            letter-spacing: 1px;
-        }
+        .btn-apply:hover { background-color: #8e0616; transform: translateY(-3px); box-shadow: 0 10px 15px -3px rgba(177, 8, 28, 0.4); }
         .screen-fade { opacity: 0; transform: translateY(30px); transition: opacity 1s ease, transform 1s ease; }
         .screen-fade.active { opacity: 1; transform: translateY(0); }
         .delay-1 { transition-delay: 0.1s; }
         .delay-2 { transition-delay: 0.4s; }
-
-        /* ดีไซน์ปุ่ม Load More ให้เข้ากับธีมมึง */
-        #load-more-container { text-align: center; margin-top: 40px; }
-        .btn-load-more {
-            background: #1a1a1a;
-            color: white;
-            padding: 15px 40px;
-            border-radius: 50px;
-            font-weight: 800;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            transition: all 0.3s;
-            cursor: pointer;
-            border: none;
-        }
-        .btn-load-more:hover {
-            background: #B1081C;
-            transform: scale(1.05);
-            box-shadow: 0 10px 20px rgba(177, 8, 28, 0.2);
-        }
+        @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
 <body>
 
     <header class="w-full bg-white border-b border-gray-200 h-20 flex items-center px-10 justify-between sticky top-0 z-50">
         <div class="flex items-center space-x-12">
-            <div class="w-10 h-10 bg-[#B1081C] rounded-lg flex items-center justify-center font-black text-white text-xl cursor-pointer">A</div>
+            <a href="index.php" class="w-10 h-10 bg-[#B1081C] rounded-lg flex items-center justify-center font-black text-white text-xl">A</a>
             <nav class="flex space-x-8 text-[14px] font-bold text-gray-500">
                 <a href="index.php" class="hover:text-[#B1081C] transition">หน้าหลัก</a>
                 <a href="P1.php" class="text-[#B1081C] border-b-2 border-[#B1081C] pb-1">หมวดหมู่การหางาน</a>
@@ -80,10 +53,7 @@ if (!$result) {
     <section class="hero-banner shadow-sm mb-16 screen-fade delay-1 bg-white relative h-[420px]">
         <div class="w-1/2 flex flex-col justify-center pl-24 z-30">
             <div class="flex items-center space-x-3 mb-5">
-                <span class="relative flex h-2 w-2">
-                    <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#B1081C] opacity-75"></span>
-                    <span class="relative inline-flex rounded-full h-2 w-2 bg-[#B1081C]"></span>
-                </span>
+                <span class="relative flex h-2 w-2"><span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#B1081C] opacity-75"></span><span class="relative inline-flex rounded-full h-2 w-2 bg-[#B1081C]"></span></span>
                 <span class="text-[#B1081C] text-[10px] font-black uppercase tracking-[4px]">Verified Platform 2026</span>
             </div>
             <h1 class="text-[70px] font-extrabold leading-[1.3] text-[#1a1a1a]">ค้นหาโอกาส <br> <span class="text-[#B1081C]">ที่ใช่สำหรับคุณ</span></h1>
@@ -95,121 +65,70 @@ if (!$result) {
     </section>
 
     <main class="max-w-[1400px] mx-auto px-10 pb-20 screen-fade delay-2">
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-12" id="job-grid">
-        
-        <?php 
-        $count = 0;
-        if ($result->num_rows > 0) {
-            while($row = $result->fetch_assoc()) { 
-                $count++;
-                // ถ้าลำดับเกิน 3 ให้ใส่คลาส hidden-card ไว้ก่อน
-                $hide_class = ($count > 3) ? 'hidden-card' : '';
-        ?>
-            <div class="job-card bg-white rounded-2xl shadow-md overflow-hidden flex flex-col relative <?php echo $hide_class; ?>" 
-                 style="<?php echo ($count > 3) ? 'display: none;' : ''; ?>">
-                <div class="absolute top-4 right-4 bg-white/90 backdrop-blur px-3 py-1 rounded-lg shadow-sm z-10 font-bold text-[#B1081C]">
-                    <?php echo $row['salary']; ?>
-                </div>
-                <img src="<?php echo $row['image_url']; ?>" class="w-full h-52 object-cover">
-                <div class="p-8 flex flex-col flex-grow">
-                    <span class="text-[#B1081C] font-extrabold text-xs tracking-widest uppercase mb-2"><?php echo $row['category']; ?></span>
-                    <h3 class="text-2xl font-extrabold text-[#1a1a1a]"><?php echo $row['title']; ?></h3>
-                    <p class="text-gray-500 mt-4 text-sm leading-relaxed mb-8"><?php echo $row['description']; ?></p>
-                    <a href="P13.php?id=<?php echo $row['id']; ?>" class="btn-apply mt-auto w-full text-white py-4 rounded-xl font-bold uppercase text-sm text-center">
-                        ดูรายละเอียดอาชีพนี้
-                    </a>
-                </div>
-            </div>
-        <?php 
-            } 
-        } else {
-            echo "<p class='col-span-3 text-center text-gray-400'>ยังไม่มีข้อมูลงานในระบบ</p>";
-        }
-        ?>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-12" id="job-grid">
+            <?php 
+            $count = 0;
+            if ($result->num_rows > 0) {
+                while($row = $result->fetch_assoc()) { 
+                    $count++;
+                    $hide_class = ($count > 3) ? 'hidden-card' : '';
+            ?>
+               <div class="job-card bg-white rounded-2xl shadow-md overflow-hidden flex flex-col relative <?php echo $hide_class; ?>">
+    <div class="absolute top-4 right-4 bg-white/90 backdrop-blur px-3 py-1 rounded-lg shadow-sm z-10 font-bold text-[#B1081C]">
+        <?= htmlspecialchars($row['sal_jr'] ?? 'N/A') ?> - <?= htmlspecialchars($row['sal_sr'] ?? 'N/A') ?>
     </div>
-<div id="job-<?php echo $row['id']; ?>" 
-     class="job-card bg-white rounded-2xl shadow-md overflow-hidden flex flex-col relative <?php echo $hide_class; ?>" 
-     style="<?php echo ($count > 3) ? 'display: none;' : ''; ?>"></div>
-    <?php if ($count > 3): ?>
-    <div id="load-more-container" class="flex justify-center mt-16">
-        <button id="btn-load-more" class="px-10 py-3 border-2 border-[#B1081C] text-[#B1081C] font-bold rounded-full hover:bg-[#B1081C] hover:text-white transition-all duration-300 cursor-pointer">
-            ดูข้อมูลเพิ่มเติม ▽
-        </button>
-    </div>
-    <?php endif; ?>
-</main>
-
-<script>
-    document.addEventListener("DOMContentLoaded", function() {
-        // 1. Animation fade เข้าหน้าเว็บ (คงเดิม)
-        const elements = document.querySelectorAll('.screen-fade');
-        setTimeout(() => { elements.forEach(el => el.classList.add('active')); }, 100);
-
-        // 2. ระบบ Load More แบบกดทีเดียวโชว์หมดเลย
-        const loadMoreBtn = document.getElementById('btn-load-more');
-        
-        if(loadMoreBtn) {
-            loadMoreBtn.addEventListener('click', function() {
-                // หาการ์ด "ทั้งหมด" ที่ยังซ่อนอยู่
-                const hiddenCards = document.querySelectorAll('.job-card.hidden-card');
-                
-                // ใช้ forEach สั่งให้โชว์ "ทุกใบ" ที่เจอ
-                hiddenCards.forEach(card => {
-                    card.style.display = 'flex'; // สั่งโชว์
-                    card.classList.remove('hidden-card'); // ลบคลาสซ่อน
-                    
-                    // ใส่ Animation ให้มันค่อยๆ โผล่มาสวยๆ
-                    card.style.animation = 'fadeInUp 0.6s ease forwards';
-                });
-
-                // เมื่อโชว์หมดแล้ว ก็สั่งซ่อนปุ่ม Load More ไปเลย เพราะไม่มีอะไรให้โชว์ต่อแล้ว
-                document.getElementById('load-more-container').style.display = 'none';
-            });
-        }
-    });
-</script>
-<style>
-    /* เพิ่ม Animation ให้ตอนกดโหลดแล้วมันสมูทขึ้น */
-    @keyframes fadeInUp {
-        from { opacity: 0; transform: translateY(20px); }
-        to { opacity: 1; transform: translateY(0); }
-    }
     
-    .hidden-card { display: none !important; }
-</style>
-    <footer class="ultra-footer">
-        </footer>
-
-    <script>
-        document.addEventListener("DOMContentLoaded", function() {
-            // Animation fade เข้าหน้าเว็บ
-            const elements = document.querySelectorAll('.screen-fade');
-            setTimeout(() => { elements.forEach(el => el.classList.add('active')); }, 100);
-
-            // ระบบ Load More JavaScript
-            const loadMoreBtn = document.getElementById('btn-load-more');
-            if(loadMoreBtn) {
-                loadMoreBtn.addEventListener('click', function() {
-                    const hiddenCards = document.querySelectorAll('.job-card.hidden-card');
-                    
-                    // แสดงเพิ่มทีละ 3 ใบ
-                    for(let i = 0; i < 3; i++) {
-                        if(hiddenCards[i]) {
-                            hiddenCards[i].style.display = 'flex'; // แสดงผล
-                            hiddenCards[i].classList.remove('hidden-card');
-                        }
-                    }
-
-                    // ถ้าหมดแล้วให้ซ่อนปุ่ม
-                    if(document.querySelectorAll('.job-card.hidden-card').length === 0) {
-                        document.getElementById('load-more-container').style.display = 'none';
-                    }
-                });
+    <img src="<?= htmlspecialchars($row['image_url'] ?? '') ?>" class="w-full h-52 object-cover">
+    
+    <div class="p-8 flex flex-col flex-grow">
+        <span class="text-[#B1081C] font-extrabold text-xs tracking-widest uppercase mb-2">
+            <?= htmlspecialchars($row['category'] ?? 'General') ?>
+        </span>
+        
+        <h3 class="text-2xl font-extrabold text-[#1a1a1a]">
+            <?= htmlspecialchars($row['title'] ?? 'ไม่มีชื่ออาชีพ') ?>
+        </h3> 
+        
+        <p class="text-gray-500 mt-4 text-sm leading-relaxed mb-8">
+            <?= mb_strimwidth(htmlspecialchars($row['description'] ?? ''), 0, 100, "...") ?>
+        </p> 
+        
+        <a href="P13.php?id=<?= $row['id'] ?>" class="btn-apply mt-auto w-full text-white py-4 rounded-xl font-bold uppercase text-sm text-center">
+            ดูรายละเอียดอาชีพนี้
+        </a>
+    </div>
+</div>
+            <?php 
+                } 
+            } else {
+                echo "<p class='col-span-3 text-center text-gray-400'>ยังไม่มีข้อมูลงานในระบบ</p>";
             }
-        });
-    </script>
-</body>
-<style>
+            ?>
+        </div>
+
+        <?php if ($count > 3): ?>
+        <div id="load-more-container" class="text-center mt-12">
+            <button id="btn-load-more" class="bg-[#1a1a1a] text-white px-10 py-4 rounded-full font-bold hover:bg-[#B1081C] transition-all">LOAD MORE</button>
+        </div>
+        <?php endif; ?>
+    </main>
+
+    <style>
+        .ultra-footer { background: #0a0a0a; padding: 100px 0; color: white; }
+        .smooth-wrapper { display: flex; height: 400px; gap: 15px; }
+        .smooth-panel { position: relative; flex: 1; background: #111; border-radius: 30px; overflow: hidden; transition: all 0.7s cubic-bezier(0.23, 1, 0.32, 1); border: 1px solid rgba(255,255,255,0.05); }
+        .smooth-panel:hover { flex: 2.5; background: #161616; }
+        .bg-number { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 120px; font-weight: 900; color: rgba(255,255,255,0.02); z-index: 1; }
+        .title-box { position: absolute; top: 50%; left: -100%; transform: translateY(-50%); transition: all 0.6s ease; z-index: 2; padding-left: 40px; width: 100%; }
+        .smooth-panel:hover .title-box { left: 0; }
+        .inner-title { font-size: 32px; color: #B1081C; font-weight: 800; }
+        .footer-sub-links { list-style: none; padding: 0; opacity: 0; transition: 0.5s 0.3s; }
+        .smooth-panel:hover .footer-sub-links { opacity: 1; }
+        .footer-sub-links a { color: #888; text-decoration: none; font-size: 14px; }
+        .footer-sub-links a:hover { color: #fff; padding-left: 5px; transition: 0.3s; }
+    </style>
+
+    <style>
     /* คอนเทนเนอร์หลัก */
     .ultra-footer {
         background: #0a0a0a;
@@ -699,4 +618,31 @@ if (!$result) {
         </div>
     </div>
 </footer>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            // Fade in animation
+            const elements = document.querySelectorAll('.screen-fade');
+            setTimeout(() => { elements.forEach(el => el.classList.add('active')); }, 100);
+
+            // Load More Logic
+            const loadMoreBtn = document.getElementById('btn-load-more');
+            if(loadMoreBtn) {
+                loadMoreBtn.addEventListener('click', function() {
+                    const hiddenCards = document.querySelectorAll('.job-card.hidden-card');
+                    hiddenCards.forEach((card, index) => {
+                        if(index < 3) { // แสดงเพิ่มทีละ 3
+                            card.style.display = 'flex';
+                            card.classList.remove('hidden-card');
+                            card.style.animation = 'fadeInUp 0.6s ease forwards';
+                        }
+                    });
+                    if(document.querySelectorAll('.job-card.hidden-card').length === 0) {
+                        document.getElementById('load-more-container').style.display = 'none';
+                    }
+                });
+            }
+        });
+    </script>
+</body>
 </html>
