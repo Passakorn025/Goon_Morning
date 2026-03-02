@@ -75,15 +75,43 @@ $result = $conn->query($sql);
 <body>
 
     <header class="w-full bg-white border-b border-gray-200 h-20 flex items-center px-10 justify-between sticky top-0 z-50">
-            <div class="flex items-center space-x-12">
-              <a href="index.php" class="w-10 h-10 bg-[#B1081C] rounded-lg flex items-center justify-center font-black text-white text-xl">A</a>
-                <nav class="flex space-x-8 text-[14px] font-bold text-gray-500">
-                    <a href="index.php" class="hover:text-[#B1081C] transition">หน้าหลัก</a>
-                    <a href="P1.php" class="hover:text-[#B1081C] transition">หมวดหมู่การหางาน</a>
-                    <a href="P2.php" class="text-[#B1081C] border-b-2 border-[#B1081C] pb-1">หมวดหมู่มหาวิทยาลัยในไทย</a>
-                </nav>
-            </div>
-            <input type="text" placeholder="ค้นหาชื่อมหาวิทยาลัย..." class="w-72 px-4 py-1.5 rounded-full border text-sm bg-white focus:outline-none focus:border-[#B1081C]">
+    <div class="flex items-center space-x-12">
+        <a href="index.php" class="w-10 h-10 bg-[#B1081C] rounded-lg flex items-center justify-center font-black text-white text-xl">A</a>
+        <nav class="flex space-x-8 text-[14px] font-bold text-gray-500">
+            <a href="index.php" class="hover:text-[#B1081C] transition">หน้าหลัก</a>
+            <a href="P1.php" class="hover:text-[#B1081C] transition">หมวดหมู่การหางาน</a>
+            <a href="P2.php" class="text-[#B1081C] border-b-2 border-[#B1081C] pb-1">หมวดหมู่มหาวิทยาลัยในไทย</a>
+        </nav>
+    </div>
+
+    <div class="relative">
+        <input type="text" id="searchInput" placeholder="ค้นหา..." 
+               class="w-72 px-4 py-1.5 rounded-full border text-sm bg-white focus:outline-none focus:border-[#B1081C]" 
+               autocomplete="off">
+        
+        <div id="searchResult" class="absolute left-0 w-full bg-white mt-1 rounded-xl shadow-2xl border border-gray-100 overflow-hidden z-[999] hidden"></div>
+    </div>
+</header>
+
+<script>
+    const input = document.getElementById('jobSearch');
+    const result = document.getElementById('jobResult');
+
+    input.addEventListener('input', function() {
+        let q = this.value;
+        if (q.length > 0) {
+            // ส่ง type=job ไปที่ api
+            fetch('search_api.php?search=' + q + '&type=job')
+                .then(res => res.text())
+                .then(data => {
+                    result.innerHTML = data;
+                    result.classList.remove('hidden');
+                });
+        } else {
+            result.classList.add('hidden');
+        }
+    });
+</script>
         </header>
 
      <section class="hero-banner shadow-sm mb-16 screen-fade delay-1 bg-white relative overflow-hidden h-[420px]">
@@ -142,9 +170,9 @@ $result = $conn->query($sql);
             <?php while($row = $result->fetch_assoc()): ?>
                 <div class="uni-card bg-white rounded-2xl shadow-md overflow-hidden flex flex-col">
                     
-                    <img src="uploads/<?php echo $row['uni_img']; ?>" 
-                         class="w-full h-52 object-cover" 
-                         onerror="this.src='https://images.unsplash.com/photo-1541339907198-e08756ebafe3?w=800'">
+                   <img src="<?php echo trim($row['uni_img']); ?>" 
+     class="w-full h-52 object-cover" 
+     onerror="this.src='https://via.placeholder.com/800x400?text=Image+Not+Found'">
                     
                     <div class="p-8 flex flex-col flex-grow">
                         <span class="text-[#B1081C] font-extrabold text-xs uppercase tracking-widest">
@@ -608,10 +636,10 @@ $result = $conn->query($sql);
                 <div class="title-box">
                     <h3 class="inner-title">JOBS</h3>
                     <ul class="footer-sub-links">
-                        <li><a href="P1.php">Software Developer</a></li>
-                        <li><a href="P1.php">Data Science</a></li>
-                        <li><a href="P1.php">Digital Marketing</a></li>
-                        <li><a href="P1.php">Engineering</a></li>
+                        <li><a href="P13.php?id=14">Security Engineer</a></li>
+                        <li><a href="P13.php?id=15">Data Engineer</a></li>
+                        <li><a href="P13.php?id=19">นักบริหารความเสี่ยงทางการเงิน</a></li>
+                        <li><a href="P13.php?id=16">ศัลยแพทย์หัวใจและทรวงอก</a></li>
                     </ul>
                 </div>
             </div>
@@ -621,10 +649,10 @@ $result = $conn->query($sql);
                 <div class="title-box">
                     <h3 class="inner-title">CAMPUS</h3>
                     <ul class="footer-sub-links">
-                        <li><a href="P2.php">Chulalongkorn</a></li>
-                        <li><a href="P2.php">Thammasat</a></li>
-                        <li><a href="P2.php">Kasetsart</a></li>
-                        <li><a href="P2.php">Mahidol</a></li>
+                        <li><a href="P21.php?uni_id=14">มหาวิทยาลัยธรรมศาสตร์</a></li>
+                        <li><a href="P21.php?uni_id=14">มหาวิทยาลัยธรรมศาสตร์</a></li>
+                        <li><a href="P21.php?uni_id=14">มหาวิทยาลัยธรรมศาสตร์</a></li>
+                        <li><a href="P21.php?uni_id=14">มหาวิทยาลัยธรรมศาสตร์</a></li>
                     </ul>
                 </div>
             </div>
@@ -634,10 +662,10 @@ $result = $conn->query($sql);
                 <div class="title-box">
                     <h3 class="inner-title">TRENDS</h3>
                     <ul class="footer-sub-links">
-                        <li><a href="#">Salary Guide 2026</a></li>
-                        <li><a href="#">Future Skills</a></li>
-                        <li><a href="#">AI Roadmap</a></li>
-                        <li><a href="#">Interview Tips</a></li>
+                        <li><a href="P21.php?uni_id=14">มหาวิทยาลัยธรรมศาสตร์</a></li>
+                        <li><a href="P13.php?id=15">Data Engineer</a></li>
+                        <li><a href="P13.php?id=14">Security Engineer</a></li>
+                        <li><a href="P13.php?id=16">ศัลยแพทย์หัวใจและทรวงอก</a></li>
                     </ul>
                 </div>
             </div>
@@ -647,10 +675,8 @@ $result = $conn->query($sql);
                 <div class="title-box">
                     <h3 class="inner-title">SUPPORT</h3>
                     <ul class="footer-sub-links">
-                        <li><a href="#">About Us</a></li>
-                        <li><a href="#">Contact Support</a></li>
-                        <li><a href="#">Privacy Policy</a></li>
-                        <li><a href="#">Join Community</a></li>
+                        <li><a href="http://www.svc.ac.th/th/">About Us</a></li>
+                     
                     </ul>
                 </div>
             </div>
@@ -669,5 +695,45 @@ $result = $conn->query($sql);
             setTimeout(() => { elements.forEach(el => el.classList.add('active')); }, 100);
         });
     </script>
+    <script>
+document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.getElementById('searchInput');
+    const searchResult = document.getElementById('searchResult');
+    
+    // เช็คว่าตอนนี้อยู่หน้าไหน (Job หรือ Uni)
+    const path = window.location.pathname;
+    let searchType = 'uni'; // Default เป็นมหาลัย
+    
+    if (path.includes('P1.php') || path.includes('job')) {
+        searchType = 'job';
+        searchInput.placeholder = "ค้นหางานที่สนใจ...";
+    } else {
+        searchType = 'uni';
+        searchInput.placeholder = "ค้นหาชื่อมหาวิทยาลัย...";
+    }
+
+    searchInput.addEventListener('input', function() {
+        const query = this.value;
+        if (query.length > 0) {
+            // ดึงข้อมูลจาก api ที่กุทำให้รอบก่อน
+            fetch(`search_api.php?search=${query}&type=${searchType}`)
+                .then(res => res.text())
+                .then(data => {
+                    searchResult.innerHTML = data;
+                    searchResult.classList.remove('hidden');
+                });
+        } else {
+            searchResult.classList.add('hidden');
+        }
+    });
+
+    // คลิกข้างนอกแล้วให้กล่องค้นหาปิด
+    document.addEventListener('click', function(e) {
+        if (!searchInput.contains(e.target) && !searchResult.contains(e.target)) {
+            searchResult.classList.add('hidden');
+        }
+    });
+});
+</script>
 </body>
 </html>

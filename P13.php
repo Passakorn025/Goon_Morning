@@ -51,15 +51,33 @@ if(!$row) {
                     <div class="pl-12 grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div class="p-4 bg-gray-50 rounded-lg border-l-4 border-gray-200">
                             <p class="text-[10px] font-bold uppercase">Entry Level</p>
-                            <p class="text-lg font-bold"><?php echo number_format($row['sal_jr'] ?? 0); ?> ฿</p>
+                           <p class="text-lg font-bold">
+    <?php 
+        
+        $sal_jr_clean = preg_replace('/[^0-9.]/', '', $row['sal_jr']);
+        echo number_format((float)$sal_jr_clean); 
+    ?> ฿
+</p>
                         </div>
                         <div class="p-4 bg-gray-50 rounded-lg border-l-4 border-[#B1081C]">
                             <p class="text-[10px] font-bold uppercase text-[#B1081C]">Experience</p>
-                            <p class="text-lg font-bold"><?php echo number_format($row['sal_sr'] ?? 0); ?> ฿</p>
+                           <p class="text-lg font-bold">
+    <?php 
+     
+        $sal_jr_clean = preg_replace('/[^0-9.]/', '', $row['sal_jr']);
+        echo number_format((float)$sal_jr_clean); 
+    ?> ฿
+</p>
                         </div>
                         <div class="p-4 bg-gray-50 rounded-lg border-l-4 border-gray-200">
                             <p class="text-[10px] font-bold uppercase">Expert Level</p>
-                            <p class="text-lg font-bold"><?php echo number_format($row['sal_exp'] ?? 0); ?> ฿</p>
+                          <p class="text-lg font-bold">
+    <?php 
+       
+        $sal_jr_clean = preg_replace('/[^0-9.]/', '', $row['sal_jr']);
+        echo number_format((float)$sal_jr_clean); 
+    ?> ฿
+</p>
                         </div>
                     </div>
                 </section>
@@ -79,10 +97,19 @@ if(!$row) {
                 </section>
 
                 <section class="pt-10 border-t border-gray-100 pl-12">
-                    <h2 class="text-sm font-bold text-[#B1081C] mb-3 uppercase">Future Outlook</h2>
-                    <p class="text-gray-500 text-sm mb-8"><?php echo nl2br($row['future']); ?></p>
-                    <a href="P1.php" class="border-2 border-[#B1081C] text-[#B1081C] px-8 py-3 rounded font-bold text-xs uppercase hover:bg-[#B1081C] hover:text-white transition">ย้อนกลับ</a>
-                </section>
+    <h2 class="text-sm font-bold text-[#B1081C] mb-3 uppercase">Future Outlook</h2>
+    <p class="text-gray-500 text-sm mb-8"><?php echo nl2br($row['future']); ?></p>
+
+    <?php
+        // เช็คว่าถ้ามาจากหน้า P21_detail (หน้าสาขา) ให้ส่งกลับไปที่นั่น
+        $back_url = "P1.php"; // ค่าเริ่มต้น
+        if (isset($_GET['from_major'])) {
+            $back_url = "P21_detail.php?id=" . intval($_GET['from_major']);
+        }
+    ?>
+    
+    <a href="<?= $back_url ?>" class="border-2 border-[#B1081C] text-[#B1081C] px-8 py-3 rounded font-bold text-xs uppercase hover:bg-[#B1081C] hover:text-white transition">ย้อนกลับ</a>
+</section>
             </div>
         </div>
     </main>
@@ -523,10 +550,10 @@ if(!$row) {
                 <div class="title-box">
                     <h3 class="inner-title">JOBS</h3>
                     <ul class="footer-sub-links">
-                        <li><a href="P1.php">Software Developer</a></li>
-                        <li><a href="P1.php">Data Science</a></li>
-                        <li><a href="P1.php">Digital Marketing</a></li>
-                        <li><a href="P1.php">Engineering</a></li>
+                        <li><a href="P13.php?id=14">Security Engineer</a></li>
+                        <li><a href="P13.php?id=15">Data Engineer</a></li>
+                        <li><a href="P13.php?id=19">นักบริหารความเสี่ยงทางการเงิน</a></li>
+                        <li><a href="P13.php?id=16">ศัลยแพทย์หัวใจและทรวงอก</a></li>
                     </ul>
                 </div>
             </div>
@@ -536,10 +563,10 @@ if(!$row) {
                 <div class="title-box">
                     <h3 class="inner-title">CAMPUS</h3>
                     <ul class="footer-sub-links">
-                        <li><a href="P2.php">Chulalongkorn</a></li>
-                        <li><a href="P2.php">Thammasat</a></li>
-                        <li><a href="P2.php">Kasetsart</a></li>
-                        <li><a href="P2.php">Mahidol</a></li>
+                        <li><a href="P21.php?uni_id=14">มหาวิทยาลัยธรรมศาสตร์</a></li>
+                        <li><a href="P21.php?uni_id=14">มหาวิทยาลัยธรรมศาสตร์</a></li>
+                        <li><a href="P21.php?uni_id=14">มหาวิทยาลัยธรรมศาสตร์</a></li>
+                        <li><a href="P21.php?uni_id=14">มหาวิทยาลัยธรรมศาสตร์</a></li>
                     </ul>
                 </div>
             </div>
@@ -549,10 +576,10 @@ if(!$row) {
                 <div class="title-box">
                     <h3 class="inner-title">TRENDS</h3>
                     <ul class="footer-sub-links">
-                        <li><a href="#">Salary Guide 2026</a></li>
-                        <li><a href="#">Future Skills</a></li>
-                        <li><a href="#">AI Roadmap</a></li>
-                        <li><a href="#">Interview Tips</a></li>
+                        <li><a href="P21.php?uni_id=14">มหาวิทยาลัยธรรมศาสตร์</a></li>
+                        <li><a href="P13.php?id=15">Data Engineer</a></li>
+                        <li><a href="P13.php?id=14">Security Engineer</a></li>
+                        <li><a href="P13.php?id=16">ศัลยแพทย์หัวใจและทรวงอก</a></li>
                     </ul>
                 </div>
             </div>
@@ -562,10 +589,8 @@ if(!$row) {
                 <div class="title-box">
                     <h3 class="inner-title">SUPPORT</h3>
                     <ul class="footer-sub-links">
-                        <li><a href="#">About Us</a></li>
-                        <li><a href="#">Contact Support</a></li>
-                        <li><a href="#">Privacy Policy</a></li>
-                        <li><a href="#">Join Community</a></li>
+                        <li><a href="http://www.svc.ac.th/th/">About Us</a></li>
+                     
                     </ul>
                 </div>
             </div>

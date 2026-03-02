@@ -27,28 +27,53 @@ if (!$result) {
         .job-card { transition: all 0.2s ease-in-out; border: 1px solid rgba(0,0,0,0.05); }
         .job-card:hover { border-color: #B1081C; box-shadow: 0 10px 20px rgba(0, 0, 0, 0.05); }
         .hidden-card { display: none !important; } 
-        .btn-apply { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); background-color: #B1081C; }
-        .btn-apply:hover { background-color: #8e0616; transform: translateY(-3px); box-shadow: 0 10px 15px -3px rgba(177, 8, 28, 0.4); }
+       .btn-apply { transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); background-color: #B1081C; }
+.btn-apply:hover { background-color: #8e0616; transform: translateY(-3px); box-shadow: 0 10px 15px -3px rgba(177, 8, 28, 0.4); letter-spacing: 1.5px; }
         .screen-fade { opacity: 0; transform: translateY(30px); transition: opacity 1s ease, transform 1s ease; }
         .screen-fade.active { opacity: 1; transform: translateY(0); }
         .delay-1 { transition-delay: 0.1s; }
         .delay-2 { transition-delay: 0.4s; }
+        
         @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
 <body>
 
-    <header class="w-full bg-white border-b border-gray-200 h-20 flex items-center px-10 justify-between sticky top-0 z-50">
-        <div class="flex items-center space-x-12">
-            <a href="index.php" class="w-10 h-10 bg-[#B1081C] rounded-lg flex items-center justify-center font-black text-white text-xl">A</a>
-            <nav class="flex space-x-8 text-[14px] font-bold text-gray-500">
-                <a href="index.php" class="hover:text-[#B1081C] transition">หน้าหลัก</a>
-                <a href="P1.php" class="text-[#B1081C] border-b-2 border-[#B1081C] pb-1">หมวดหมู่การหางาน</a>
-                <a href="P2.php" class="hover:text-[#B1081C] transition">หมวดหมู่มหาวิทยาลัยในไทย</a>
-            </nav>
+   <header class="w-full bg-white border-b border-gray-200 h-20 flex items-center px-10 justify-between sticky top-0 z-50">
+    <div class="flex items-center space-x-12">
+        <a href="index.php" class="w-10 h-10 bg-[#B1081C] rounded-lg flex items-center justify-center font-black text-white text-xl shadow-sm transition-transform active:scale-95">A</a>
+        
+        <nav class="flex space-x-8 text-[14px] font-bold">
+            <?php $current_page = basename($_SERVER['PHP_SELF']); ?>
+            
+            <a href="index.php" class="transition-colors <?= ($current_page == 'index.php' || $current_page == 'Index.php') ? 'text-[#B1081C] border-b-2 border-[#B1081C] pb-1' : 'text-gray-500 hover:text-[#B1081C]' ?>">
+                หน้าหลัก
+            </a>
+            
+            <a href="P1.php" class="transition-colors <?= ($current_page == 'P1.php') ? 'text-[#B1081C] border-b-2 border-[#B1081C] pb-1' : 'text-gray-500 hover:text-[#B1081C]' ?>">
+                หมวดหมู่การหางาน
+            </a>
+            
+            <a href="P2.php" class="transition-colors <?= ($current_page == 'P2.php') ? 'text-[#B1081C] border-b-2 border-[#B1081C] pb-1' : 'text-gray-500 hover:text-[#B1081C]' ?>">
+                หมวดหมู่มหาวิทยาลัยในไทย
+            </a>
+    </div>
+
+    <div class="relative inline-block">
+        <div class="relative flex items-center">
+            <input type="text" id="searchInput" placeholder="ค้นหา..." 
+                   class="w-72 px-5 py-2 rounded-full border border-gray-100 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-[#B1081C]/10 focus:bg-white transition-all font-medium"
+                   autocomplete="off">
+            <div class="absolute right-4 text-gray-300">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+            </div>
         </div>
-        <input type="text" placeholder="ค้นหา" class="w-72 px-4 py-1.5 rounded-full border text-sm bg-white focus:outline-none">
-    </header>
+        <div id="searchResult" class="absolute right-0 w-[400px] bg-white mt-3 rounded-2xl shadow-2xl border border-gray-100 overflow-hidden z-[999] hidden">
+        </div>
+    </div>
+</header>
 
     <section class="hero-banner shadow-sm mb-16 screen-fade delay-1 bg-white relative h-[420px]">
         <div class="w-1/2 flex flex-col justify-center pl-24 z-30">
@@ -60,7 +85,7 @@ if (!$result) {
         </div>
         <div class="red-design-part">
             <div class="absolute inset-0 z-0 opacity-40 mix-blend-overlay"><img src="https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&w=1200&q=80" class="w-full h-full object-cover grayscale"></div>
-            /div>
+          
 
             <div class="absolute inset-0 opacity-[0.1] z-10" 
                 style="background-image: linear-gradient(rgba(255,255,255,0.4) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.4) 1px, transparent 1px); background-size: 35px 35px;">
@@ -126,7 +151,7 @@ if (!$result) {
 
         <?php if ($count > 3): ?>
         <div id="load-more-container" class="text-center mt-12">
-            <button id="btn-load-more" class="bg-[#1a1a1a] text-white px-10 py-4 rounded-full font-bold hover:bg-[#B1081C] transition-all">LOAD MORE</button>
+            <button id="btn-load-more" class="bg-[#1a1a1a] text-white px-10 py-4 rounded-full font-bold hover:bg-[#B1081C] transition-all">เพิ่มเติม</button>
         </div>
         <?php endif; ?>
     </main>
@@ -144,6 +169,7 @@ if (!$result) {
         .smooth-panel:hover .footer-sub-links { opacity: 1; }
         .footer-sub-links a { color: #888; text-decoration: none; font-size: 14px; }
         .footer-sub-links a:hover { color: #fff; padding-left: 5px; transition: 0.3s; }
+        
     </style>
 
     <style>
@@ -582,10 +608,10 @@ if (!$result) {
                 <div class="title-box">
                     <h3 class="inner-title">JOBS</h3>
                     <ul class="footer-sub-links">
-                        <li><a href="P1.php">Software Developer</a></li>
-                        <li><a href="P1.php">Data Science</a></li>
-                        <li><a href="P1.php">Digital Marketing</a></li>
-                        <li><a href="P1.php">Engineering</a></li>
+                        <li><a href="P13.php?id=14">Security Engineer</a></li>
+                        <li><a href="P13.php?id=15">Data Engineer</a></li>
+                        <li><a href="P13.php?id=19">นักบริหารความเสี่ยงทางการเงิน</a></li>
+                        <li><a href="P13.php?id=16">ศัลยแพทย์หัวใจและทรวงอก</a></li>
                     </ul>
                 </div>
             </div>
@@ -595,10 +621,10 @@ if (!$result) {
                 <div class="title-box">
                     <h3 class="inner-title">CAMPUS</h3>
                     <ul class="footer-sub-links">
-                        <li><a href="P2.php">Chulalongkorn</a></li>
-                        <li><a href="P2.php">Thammasat</a></li>
-                        <li><a href="P2.php">Kasetsart</a></li>
-                        <li><a href="P2.php">Mahidol</a></li>
+                        <li><a href="P21.php?uni_id=14">มหาวิทยาลัยธรรมศาสตร์</a></li>
+                        <li><a href="P21.php?uni_id=14">มหาวิทยาลัยธรรมศาสตร์</a></li>
+                        <li><a href="P21.php?uni_id=14">มหาวิทยาลัยธรรมศาสตร์</a></li>
+                        <li><a href="P21.php?uni_id=14">มหาวิทยาลัยธรรมศาสตร์</a></li>
                     </ul>
                 </div>
             </div>
@@ -608,10 +634,10 @@ if (!$result) {
                 <div class="title-box">
                     <h3 class="inner-title">TRENDS</h3>
                     <ul class="footer-sub-links">
-                        <li><a href="#">Salary Guide 2026</a></li>
-                        <li><a href="#">Future Skills</a></li>
-                        <li><a href="#">AI Roadmap</a></li>
-                        <li><a href="#">Interview Tips</a></li>
+                        <li><a href="P21.php?uni_id=14">มหาวิทยาลัยธรรมศาสตร์</a></li>
+                        <li><a href="P13.php?id=15">Data Engineer</a></li>
+                        <li><a href="P13.php?id=14">Security Engineer</a></li>
+                        <li><a href="P13.php?id=16">ศัลยแพทย์หัวใจและทรวงอก</a></li>
                     </ul>
                 </div>
             </div>
@@ -621,10 +647,8 @@ if (!$result) {
                 <div class="title-box">
                     <h3 class="inner-title">SUPPORT</h3>
                     <ul class="footer-sub-links">
-                        <li><a href="#">About Us</a></li>
-                        <li><a href="#">Contact Support</a></li>
-                        <li><a href="#">Privacy Policy</a></li>
-                        <li><a href="#">Join Community</a></li>
+                        <li><a href="http://www.svc.ac.th/th/">About Us</a></li>
+                     
                     </ul>
                 </div>
             </div>
@@ -645,22 +669,49 @@ if (!$result) {
 
             // Load More Logic
             const loadMoreBtn = document.getElementById('btn-load-more');
-            if(loadMoreBtn) {
-                loadMoreBtn.addEventListener('click', function() {
-                    const hiddenCards = document.querySelectorAll('.job-card.hidden-card');
-                    hiddenCards.forEach((card, index) => {
-                        if(index < 3) { // แสดงเพิ่มทีละ 3
-                            card.style.display = 'flex';
-                            card.classList.remove('hidden-card');
-                            card.style.animation = 'fadeInUp 0.6s ease forwards';
-                        }
-                    });
-                    if(document.querySelectorAll('.job-card.hidden-card').length === 0) {
-                        document.getElementById('load-more-container').style.display = 'none';
-                    }
-                });
-            }
+if(loadMoreBtn) {
+    loadMoreBtn.addEventListener('click', function() {
+        const hiddenCards = document.querySelectorAll('.job-card.hidden-card');
+        hiddenCards.forEach((card) => {
+            card.style.display = 'flex';
+            card.classList.remove('hidden-card');
+            card.style.animation = 'fadeInUp 0.6s ease forwards';
+        });
+        document.getElementById('load-more-container').style.display = 'none';
+    });
+}
         });
     </script>
+    <script>
+document.addEventListener('DOMContentLoaded', function() {
+    const input = document.getElementById('searchInput');
+    const result = document.getElementById('searchResult');
+    
+    // เช็คว่าอยู่หน้าไหนอัตโนมัติ
+    const path = window.location.pathname;
+    const type = (path.includes('P1') || path.includes('job')) ? 'job' : 'uni';
+
+    input.addEventListener('input', function() {
+        const query = this.value;
+        if (query.length > 0) {
+            fetch(`search_api.php?search=${query}&type=${type}`)
+                .then(res => res.text())
+                .then(data => {
+                    result.innerHTML = data;
+                    result.classList.remove('hidden');
+                });
+        } else {
+            result.classList.add('hidden');
+        }
+    });
+
+    // คลิกข้างนอกแล้วปิด
+    document.addEventListener('click', function(e) {
+        if (!input.contains(e.target) && !result.contains(e.target)) {
+            result.classList.add('hidden');
+        }
+    });
+});
+</script>
 </body>
 </html>

@@ -1,46 +1,68 @@
-<?php 
-include 'connect.php'; 
-$id = isset($_GET['id']) ? $_GET['id'] : 1; 
-$res = $conn->query("SELECT * FROM jobs WHERE id = $id");
-$row = $res->fetch_assoc();
+<?php
+include 'connect.php';
+
+// 1. รับ ID จาก URL ที่ส่งมาจากหน้า P21
+$id = isset($_GET['id']) ? intval($_GET['id']) : 0; 
+
+// 2. ดึงข้อมูลจากตาราง jobs (เหมือน P13 เป๊ะ)
+$sql = "SELECT * FROM jobs WHERE id = $id";
+$result = $conn->query($sql);
+$row = $result->fetch_assoc();
+
+if(!$row) {
+    echo "<script>alert('ไม่พบข้อมูลงาน'); window.location='P1.php';</script>";
+    exit();
+}
+
+// ฟังก์ชันล้างตัวเลข (ป้องกัน Fatal Error number_format)
+function formatMoney($val) {
+    $clean = preg_replace('/[^0-9.]/', '', $val);
+    return is_numeric($clean) ? number_format((float)$clean) : "0";
+}
 ?>
-<!DOCTYPE html>
-<html lang="th">
-<head>
-    <meta charset="UTF-8">
-    <title><?= $row['title'] ?> - Insights</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <style>body { font-family: 'Sarabun', sans-serif; background-color: #fcfcfc; }</style>
-</head>
-<body>
-    <div style="height: 8px; background: #B1081C;"></div>
-    <main class="max-w-[1000px] mx-auto px-10 py-16">
-        <h1 class="text-5xl font-black uppercase"><?= $row['title'] ?></h1>
-        <p class="text-[#B1081C] font-bold"><?= $row['category'] ?></p>
 
-        <div class="mt-10 p-12 bg-white border-l-[12px] border-[#B1081C] shadow-sm">
-            <section class="mb-10">
-                <h2 class="font-black text-xl mb-4">01 บทบาทหลักในองค์กร</h2>
-                <p class="text-gray-600 leading-relaxed"><?= nl2br($row['content_role']) ?></p>
-            </section>
+<div class="job-container">
+    <h1 class="text-4xl font-bold"><?php echo $row['title']; ?></h1>
+    
+    <section class="mt-8">
+        <h2 class="text-xl font-bold">01 บทบาทและความสำคัญ</h2>
+        <p><?php echo nl2br($row['description']); ?></p>
+    </section>
 
-            <section class="mb-10">
-                <h2 class="font-black text-xl mb-4">02 ฐานเงินเดือน</h2>
-                <div class="grid grid-cols-3 gap-4">
-                    <div class="p-4 bg-gray-50">Junior: <?= $row['salary_junior'] ?></div>
-                    <div class="p-4 bg-gray-50">Senior: <?= $row['salary_senior'] ?></div>
-                    <div class="p-4 bg-gray-50">Expert: <?= $row['salary_expert'] ?></div>
-                </div>
-            </section>
-
-            <section>
-                <h2 class="font-black text-xl mb-4">03 ทักษะที่ควรพัฒนา</h2>
-                <div class="grid grid-cols-2 gap-8">
-                    <div><strong>Hard Skills:</strong><br><?= nl2br($row['content_skills_hard']) ?></div>
-                    <div><strong>Soft Skills:</strong><br><?= nl2br($row['content_skills_soft']) ?></div>
-                </div>
-            </section>
+    <section class="mt-8">
+        <h2 class="text-xl font-bold">02 ค่าตอบแทน (Salary)</h2>
+        <div class="grid grid-cols-3 gap-4">
+            <div class="p-4 bg-gray-100 rounded">
+                <p>Entry Level (Junior)</p>
+                <p class="font-bold"><?php echo formatMoney($row['sal_jr']); ?> ฿</p>
+            </div>
+            <div class="p-4 bg-gray-100 rounded">
+                <p>Experience (Senior)</p>
+                <p class="font-bold"><?php echo formatMoney($row['sal_sr']); ?> ฿</p>
+            </div>
+            <div class="p-4 bg-gray-100 rounded">
+                <p>Expert Level</p>
+                <p class="font-bold"><?php echo formatMoney($row['sal_exp']); ?> ฿</p>
+            </div>
         </div>
-    </main>
-</body>
-</html>
+    </section>
+
+    <section class="mt-8">
+        <h2 class="text-xl font-bold">03 Skills ที่ต้องมี</h2>
+        <div class="flex gap-10">
+            <div>
+                <p class="font-bold text-red-600">Hard Skills</p>
+                <p><?php echo nl2br($row['h_skill']); ?></p>
+            </div>
+            <div>
+                <p class="font-bold text-blue-600">Soft Skills</p>
+                <p><?php echo nl2br($row['s_skill']); ?></p>
+            </div>
+        </div>
+    </section>
+
+    <section class="mt-8 border-t pt-5">
+        <h2 class="text-lg font-bold">อนาคตของสายงาน (Future)</h2>
+        <p class="text-gray-500"><?php echo nl2br($row['future']); ?></p>
+    </section>
+</div>

@@ -1,151 +1,198 @@
 <?php
 include 'connect.php';
-$uni_id = isset($_GET['id']) ? intval($_GET['id']) : die("ไอเหี้ย มึงลืมส่ง ID มหาลัยมาใน URL");
 
-// --- 1. ส่วนประมวลผลข้อมูล (PHP Logic) ---
-if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    if (isset($_POST['save_uni'])) {
-        $stmt = $conn->prepare("UPDATE universities SET uni_name=?, uni_img=? WHERE uni_id=?");
-        $stmt->bind_param("ssi", $_POST['uni_name'], $_POST['uni_img'], $uni_id);
-        $stmt->execute();
-    } elseif (isset($_POST['save_fac'])) {
-        $stmt = $conn->prepare("UPDATE faculties SET fac_name=? WHERE id=?");
-        $stmt->bind_param("si", $_POST['fac_name'], $_POST['fac_id']);
-        $stmt->execute();
-    } elseif (isset($_POST['save_major'])) {
-        $sql = "UPDATE majors SET major_name=?, major_description=?, round_open=?, seats=?, major_plans=?, gpax_min=?, condition_text=? WHERE id=?";
-        $stmt = $conn->prepare($sql);
-        $stmt->bind_param("ssiisssi", $_POST['m_name'], $_POST['m_desc'], $_POST['m_round'], $_POST['m_seats'], $_POST['m_plans'], $_POST['m_gpax'], $_POST['m_cond'], $_POST['m_id']);
-        $stmt->execute();
+// --- 1. ส่วนประมวลผล (PHP Logic) ---
+$uni_id = isset($_GET['id']) ? intval($_GET['id']) : 0;
+
+// A. แก้ไขข้อมูลสาขาแบบละเอียด
+// --- 1. ส่วนประมวลผล (PHP Logic) ---
+if (isset($_POST['update_major_full'])) {
+    $id = $_POST['major_id'];
+    $name = $_POST['major_name'];
+    $detail = $_POST['major_detail']; // รับจากฟอร์ม
+    $round = $_POST['major_round'];
+    $seats = $_POST['major_quota']; // จำนวนรับ
+    $plans = $_POST['major_plans'];
+    $gpax = $_POST['major_gpax'];
+    $condition = $_POST['major_condition'];
+
+    // แก้ชื่อคอลัมน์ให้ตรงกับ Screenshot 3 เป๊ะๆ
+    $sql = "UPDATE majors SET 
+            major_name=?, 
+            major_description=?, 
+            round_open=?, 
+            seats=?, 
+            major_plans=?, 
+            gpax_min=?, 
+            condition_text=? 
+            WHERE id=?";
+    
+    $stmt = $conn->prepare($sql);
+    // เช็คประเภทตัวแปร: s=string, i=integer, d=decimal
+    // gpax_min ใน DB มึงเป็น decimal(3,2) ให้ใช้ "d" หรือ "s" ก็ได้
+    $stmt->bind_param("ssiisssi", 
+        $name, $detail, $round, $seats, $plans, $gpax, $condition, $id
+    );
+    
+    if ($stmt->execute()) {
+        echo "<script>alert('บันทึกสำเร็จ!'); window.location='?id=$uni_id&tab=maj';</script>";
+        exit();
     }
-    header("Location: admin_edit_uni.php?id=$uni_id"); exit();
 }
 
-// ระบบลบ
+// B. แก้ไขมหาลัย
+if (isset($_POST['update_university'])) {
+    $name = $_POST['uni_name'];
+    $img = $_POST['uni_img'];
+    $stmt = $conn->prepare("UPDATE universities SET uni_name = ?, uni_img = ? WHERE uni_id = ?");
+    $stmt->bind_param("ssi", $name, $img, $uni_id);
+    if ($stmt->execute()) { header("Location: admin.php?mode=edu"); exit(); }
+}
+
+// C. ลบข้อมูล
 if (isset($_GET['del_fac'])) {
-    $conn->query("DELETE FROM faculties WHERE id = ".intval($_GET['del_fac']));
-    header("Location: admin_edit_uni.php?id=$uni_id"); exit();
+    $id = intval($_GET['del_fac']);
+    $conn->query("DELETE FROM majors WHERE fac_id = $id");
+    $conn->query("DELETE FROM faculties WHERE id = $id");
+    header("Location: ?id=$uni_id&tab=fac"); exit();
 }
 if (isset($_GET['del_maj'])) {
-    $conn->query("DELETE FROM majors WHERE id = ".intval($_GET['del_maj']));
-    header("Location: admin_edit_uni.php?id=$uni_id"); exit();
+    $id = intval($_GET['del_maj']);
+    $conn->query("DELETE FROM majors WHERE id = $id");
+    header("Location: ?id=$uni_id&tab=maj"); exit();
 }
 
-$uni = $conn->query("SELECT * FROM universities WHERE uni_id = $uni_id")->fetch_assoc();
+$tab = $_GET['tab'] ?? 'fac'; 
 ?>
 
 <!DOCTYPE html>
 <html lang="th">
 <head>
     <meta charset="UTF-8">
+    <title>Edit System</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;700;800&display=swap" rel="stylesheet">
-    <style> body { font-family: 'Sarabun', sans-serif; } </style>
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;700&display=swap" rel="stylesheet">
+    <style>body { font-family: 'Sarabun', sans-serif; }</style>
 </head>
-<body class="bg-gray-100 p-6">
+<body class="bg-gray-50 py-12 px-5">
 
     <div class="max-w-4xl mx-auto space-y-10">
-        <h1 class="text-3xl font-black text-gray-800">จัดการข้อมูล: <?= $uni['uni_name'] ?></h1>
-
-        <div class="bg-white p-8 rounded-3xl shadow border-l-8 border-red-500">
-            <h2 class="text-xl font-bold mb-6 text-red-600 uppercase">1. ข้อมูลมหาวิทยาลัย</h2>
-            <form method="POST" class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <input type="text" name="uni_name" value="<?= $uni['uni_name'] ?>" class="p-4 border rounded-2xl bg-gray-50 font-bold" placeholder="ชื่อมหาลัย">
-                <input type="text" name="uni_img" value="<?= $uni['uni_img'] ?>" class="p-4 border rounded-2xl bg-gray-50" placeholder="URL รูป Logo">
-                <button type="submit" name="save_uni" class="md:col-span-2 bg-red-500 text-white py-4 rounded-2xl font-black shadow-lg">บันทึกมหาลัย</button>
+        
+        <?php if ($uni_id > 0): 
+            $res_uni = $conn->query("SELECT * FROM universities WHERE uni_id = $uni_id");
+            $data = $res_uni->fetch_assoc();
+        ?>
+        <div class="bg-white p-10 rounded-3xl shadow-sm border">
+            <h2 class="text-2xl font-black mb-8 uppercase text-gray-800 border-l-4 border-red-600 pl-4">Edit University Info</h2>
+            <form action="" method="POST" class="space-y-6">
+                <div>
+                    <label class="block text-sm font-bold text-gray-600 mb-2 uppercase">University Name</label>
+                    <input type="text" name="uni_name" value="<?= $data['uni_name'] ?>" class="w-full px-4 py-3 border rounded-xl outline-none focus:border-red-600">
+                </div>
+                <div>
+                    <label class="block text-sm font-bold text-gray-600 mb-2 uppercase">Logo URL</label>
+                    <input type="text" name="uni_img" value="<?= $data['uni_img'] ?>" class="w-full px-4 py-3 border rounded-xl outline-none focus:border-red-600">
+                </div>
+                <div class="flex space-x-4">
+                    <button type="submit" name="update_university" class="flex-1 bg-red-700 text-white py-4 rounded-xl font-bold uppercase hover:bg-black transition-all shadow-lg">Update</button>
+                    <a href="admin.php?mode=edu" class="flex-1 bg-gray-100 text-gray-500 py-4 rounded-xl font-bold uppercase text-center flex items-center justify-center">Cancel</a>
+                </div>
             </form>
         </div>
+        <?php endif; ?>
 
-        <div class="bg-white p-8 rounded-3xl shadow border-l-8 border-blue-500">
-            <h2 class="text-xl font-bold mb-6 text-blue-600 uppercase">2. จัดการคณะ (กด MORE เพื่อแก้ชื่อ)</h2>
-            <div class="space-y-3">
-                <?php
-                $facs = $conn->query("SELECT * FROM faculties WHERE uni_id = $uni_id");
-                while($f = $facs->fetch_assoc()): ?>
-                    <div class="border rounded-2xl p-4 bg-gray-50 flex flex-col">
-                        <div class="flex justify-between items-center">
-                            <span class="font-bold text-gray-700"><?= $f['fac_name'] ?></span>
-                            <div class="flex gap-2">
-                                <button onclick="toggle('f-<?= $f['id'] ?>')" class="bg-white border-2 px-6 py-2 rounded-xl text-sm font-black hover:bg-blue-500 hover:text-white transition">MORE</button>
-                                <a href="?id=<?= $uni_id ?>&del_fac=<?= $f['id'] ?>" class="bg-red-50 text-red-600 px-4 py-2 rounded-xl text-sm font-black">ลบ</a>
-                            </div>
-                        </div>
-                        <div id="f-<?= $f['id'] ?>" class="hidden mt-4 pt-4 border-t-2 border-dashed">
-                            <form method="POST" class="flex gap-2">
-                                <input type="hidden" name="fac_id" value="<?= $f['id'] ?>">
-                                <input type="text" name="fac_name" value="<?= $f['fac_name'] ?>" class="flex-1 p-3 border rounded-xl shadow-sm outline-none">
-                                <button type="submit" name="save_fac" class="bg-blue-600 text-white px-8 rounded-xl font-bold">อัปเดต</button>
-                            </form>
+        <?php 
+        if (isset($_GET['edit_major'])): 
+            $edit_id = intval($_GET['edit_major']);
+            $res_m = $conn->query("SELECT * FROM majors WHERE id = $edit_id");
+            $edit_data = $res_m->fetch_assoc();
+            if($edit_data):
+        ?>
+        <div id="major-edit-form" class="bg-white p-10 rounded-3xl shadow-2xl border-2 border-blue-500 scroll-mt-10">
+            <h2 class="text-2xl font-black mb-8 text-blue-600 uppercase border-b pb-4">📝 Edit Major Details</h2>
+            <form action="" method="POST" class="space-y-8">
+                <input type="hidden" name="major_id" value="<?= $edit_data['id'] ?>">
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div class="space-y-4">
+                        <h3 class="font-bold text-gray-800 border-b pb-2">1. Basic Info</h3>
+                        <label class="block text-sm font-bold">ชื่อสาขา: 
+                            <input type="text" name="major_name" value="<?= $edit_data['major_name'] ?? '' ?>" class="w-full border p-3 rounded-xl mt-1">
+                        </label>
+                        <label class="block text-sm font-bold">รายละเอียด: 
+                            <textarea name="major_detail" rows="3" class="w-full border p-3 rounded-xl mt-1"><?= $edit_data['major_detail'] ?? $edit_data['detail'] ?? '' ?></textarea>
+                        </label>
+                        <div class="grid grid-cols-2 gap-4">
+                            <label class="block text-sm font-bold">รอบที่รับ: 
+                                <input type="number" name="major_round" value="<?= $edit_data['major_round'] ?? $edit_data['round'] ?? 0 ?>" class="w-full border p-3 rounded-xl mt-1">
+                            </label>
+                            <label class="block text-sm font-bold">จำนวนรับ: 
+                                <input type="number" name="major_quota" value="<?= $edit_data['major_quota'] ?? $edit_data['quota'] ?? 0 ?>" class="w-full border p-3 rounded-xl mt-1">
+                            </label>
                         </div>
                     </div>
-                <?php endwhile; ?>
-            </div>
-        </div>
+                    <div class="space-y-4">
+                        <h3 class="font-bold text-gray-800 border-b pb-2">2. Requirements</h3>
+                        <label class="block text-sm font-bold">แผนการเรียน: 
+                            <input type="text" name="major_plans" value="<?= $edit_data['major_plans'] ?? '' ?>" class="w-full border p-3 rounded-xl mt-1">
+                        </label>
+                        <label class="block text-sm font-bold">เกรดเฉลี่ย (GPAX): 
+                            <input type="text" name="major_gpax" value="<?= $edit_data['major_gpax'] ?? '' ?>" class="w-full border p-3 rounded-xl mt-1">
+                        </label>
+                        <label class="block text-sm font-bold">เงื่อนไขเพิ่มเติม: 
+                            <textarea name="major_condition" rows="3" class="w-full border p-3 rounded-xl mt-1"><?= $edit_data['major_condition'] ?? '' ?></textarea>
+                        </label>
+                    </div>
+                </div>
 
-        <div class="bg-white p-8 rounded-3xl shadow border-l-8 border-green-500">
-            <h2 class="text-xl font-bold mb-6 text-green-600 uppercase">3. จัดการสาขา (กด MORE เพื่อแก้ละเอียดเหมือนตอน ADD)</h2>
-            <div class="space-y-6">
-                <?php
-                $fac_res = $conn->query("SELECT * FROM faculties WHERE uni_id = $uni_id");
-                while($fr = $fac_res->fetch_assoc()): ?>
-                    <div class="p-4 bg-green-50 rounded-2xl border border-green-100">
-                        <p class="font-black text-green-700 mb-4 border-b pb-2">📂 คณะ: <?= $fr['fac_name'] ?></p>
-                        <?php
-                        $majs = $conn->query("SELECT * FROM majors WHERE fac_id = {$fr['id']}");
-                        while($m = $majs->fetch_assoc()): ?>
-                            <div class="bg-white p-4 rounded-xl shadow-sm mb-3 border">
-                                <div class="flex justify-between items-center">
-                                    <span class="font-bold text-gray-800"><?= $m['major_name'] ?></span>
-                                    <div class="flex gap-2">
-                                        <button onclick="toggle('m-<?= $m['id'] ?>')" class="bg-green-600 text-white px-4 py-2 rounded-xl text-xs font-black">MORE (แก้ละเอียด)</button>
-                                        <a href="?id=<?= $uni_id ?>&del_maj=<?= $m['id'] ?>" class="text-red-500 text-xs font-bold px-2 self-center">ลบ</a>
-                                    </div>
-                                </div>
-                                <div id="m-<?= $m['id'] ?>" class="hidden mt-4 pt-4 border-t-2 border-dashed space-y-4">
-                                    <form method="POST" class="grid grid-cols-2 gap-4">
-                                        <input type="hidden" name="m_id" value="<?= $m['id'] ?>">
-                                        <div class="col-span-2">
-                                            <label class="text-[10px] font-black text-gray-400">ชื่อสาขาวิชา</label>
-                                            <input type="text" name="m_name" value="<?= $m['major_name'] ?>" class="w-full p-2 border rounded-xl bg-gray-50">
-                                        </div>
-                                        <div class="col-span-2">
-                                            <label class="text-[10px] font-black text-gray-400">รายละเอียด (DESCRIPTION)</label>
-                                            <textarea name="m_desc" rows="2" class="w-full p-2 border rounded-xl bg-gray-50"><?= $m['major_description'] ?></textarea>
-                                        </div>
-                                        <div>
-                                            <label class="text-[10px] font-black text-gray-400">รอบที่เปิด</label>
-                                            <input type="number" name="m_round" value="<?= $m['round_open'] ?>" class="w-full p-2 border rounded-xl bg-gray-50">
-                                        </div>
-                                        <div>
-                                            <label class="text-[10px] font-black text-gray-400">จำนวนที่รับ</label>
-                                            <input type="number" name="m_seats" value="<?= $m['seats'] ?>" class="w-full p-2 border rounded-xl bg-gray-50">
-                                        </div>
-                                        <div>
-                                            <label class="text-[10px] font-black text-gray-400">แผนการเรียน</label>
-                                            <input type="text" name="m_plans" value="<?= $m['major_plans'] ?>" class="w-full p-2 border rounded-xl bg-gray-50">
-                                        </div>
-                                        <div>
-                                            <label class="text-[10px] font-black text-gray-400">เกรดขั้นต่ำ (GPAX)</label>
-                                            <input type="text" name="m_gpax" value="<?= $m['gpax_min'] ?>" class="w-full p-2 border rounded-xl bg-gray-50">
-                                        </div>
-                                        <div class="col-span-2">
-                                            <label class="text-[10px] font-black text-gray-400">เงื่อนไขเพิ่มเติม</label>
-                                            <textarea name="m_cond" rows="2" class="w-full p-2 border rounded-xl bg-gray-50"><?= $m['condition_text'] ?></textarea>
-                                        </div>
-                                        <button type="submit" name="save_major" class="col-span-2 bg-green-600 text-white py-4 rounded-2xl font-black shadow-lg uppercase tracking-widest">อัปเดตสาขานี้</button>
-                                    </form>
+                <div class="pt-6 flex gap-4 border-t">
+                    <button type="submit" name="update_major_full" class="flex-1 bg-blue-600 text-white py-4 rounded-2xl font-bold uppercase hover:bg-black transition-all shadow-lg">Save All Changes</button>
+                    <a href="?id=<?= $uni_id ?>&tab=maj" class="flex-1 bg-gray-100 text-gray-500 py-4 rounded-2xl font-bold uppercase text-center flex items-center justify-center border">Cancel</a>
+                </div>
+            </form>
+        </div>
+        <?php endif; endif; ?>
+
+        <div class="bg-white rounded-3xl shadow-sm border overflow-hidden">
+            <div class="flex border-b bg-gray-50">
+                <a href="?id=<?= $uni_id ?>&tab=fac" class="flex-1 py-5 text-center font-bold <?= $tab == 'fac' ? 'bg-white text-red-600 border-t-4 border-red-600' : 'text-gray-400' ?>">1. จัดการคณะ</a>
+                <a href="?id=<?= $uni_id ?>&tab=maj" class="flex-1 py-5 text-center font-bold <?= $tab == 'maj' ? 'bg-white text-red-600 border-t-4 border-red-600' : 'text-gray-400' ?>">2. จัดการสาขา</a>
+            </div>
+
+            <div class="p-8">
+                <?php if ($tab == 'fac'): ?>
+                    <div class="grid gap-3">
+                        <?php 
+                        $facs = $conn->query("SELECT * FROM faculties WHERE uni_id = $uni_id");
+                        while($f = $facs->fetch_assoc()): ?>
+                            <div class="flex items-center justify-between p-4 bg-gray-50 rounded-2xl border hover:border-red-500 transition">
+                                <span class="font-bold text-gray-700"><?= $f['fac_name'] ?></span>
+                                <div class="flex items-center space-x-3">
+                                    <a href="?id=<?= $uni_id ?>&tab=fac&del_fac=<?= $f['id'] ?>" onclick="return confirm('ลบแล้วข้อมูลสาขาข้างในจะหายหมด ยืนยันไหม?')" class="w-8 h-8 flex items-center justify-center bg-red-100 text-red-600 rounded-full hover:bg-red-600 hover:text-white transition">✕</a>
                                 </div>
                             </div>
                         <?php endwhile; ?>
                     </div>
-                <?php endwhile; ?>
+                <?php else: ?>
+                    <div class="grid gap-3">
+                        <?php 
+                        $majs = $conn->query("SELECT majors.*, faculties.fac_name FROM majors JOIN faculties ON majors.fac_id = faculties.id WHERE faculties.uni_id = $uni_id");
+                        while($m = $majs->fetch_assoc()): ?>
+                            <div class="flex items-center justify-between p-4 bg-gray-50 rounded-2xl border hover:border-pink-500 transition">
+                                <div>
+                                    <p class="text-[10px] font-bold text-gray-400 uppercase"><?= $m['fac_name'] ?></p>
+                                    <span class="font-bold text-gray-700"><?= $m['major_name'] ?></span>
+                                </div>
+                                <div class="flex items-center space-x-3">
+                                    <a href="?id=<?= $uni_id ?>&edit_major=<?= $m['id'] ?>&tab=maj#major-edit-form" class="bg-blue-50 text-blue-600 px-4 py-2 rounded-xl text-xs font-bold hover:bg-blue-600 hover:text-white transition shadow-sm">แก้ไขละเอียด</a>
+                                    <a href="?id=<?= $uni_id ?>&tab=maj&del_maj=<?= $m['id'] ?>" onclick="return confirm('ลบสาขานี้จริงไหม?')" class="w-8 h-8 flex items-center justify-center bg-red-100 text-red-600 rounded-full hover:bg-red-600 hover:text-white transition">✕</a>
+                                </div>
+                            </div>
+                        <?php endwhile; ?>
+                    </div>
+                <?php endif; ?>
             </div>
         </div>
-
     </div>
-
-    <script>
-        function toggle(id) { document.getElementById(id).classList.toggle('hidden'); }
-    </script>
 </body>
 </html>

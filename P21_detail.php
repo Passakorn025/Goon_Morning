@@ -1,28 +1,21 @@
-<?php
+<?php 
 include 'connect.php'; 
+$id = isset($_GET['id']) ? intval($_GET['id']) : 1; 
 
-// 1. รับค่า id สาขาจาก URL
-$id = isset($_GET['id']) ? intval($_GET['id']) : 0;
+// ดึงข้อมูลสาขา
+$res = $conn->query("SELECT m.*, f.fac_name, u.uni_name 
+                     FROM majors m
+                     JOIN faculties f ON m.fac_id = f.id
+                     JOIN universities u ON m.uni_id = u.uni_id
+                     WHERE m.id = $id");
+$major = $res->fetch_assoc();
 
-// 2. SQL JOIN 3 ตาราง (แก้จาก major_id เป็น id ตามรูป DB มึง)
-// ใช้ majors.* เพื่อดึงทุกคอลัมน์จากตาราง majors มาให้หมด
-$sql = "SELECT majors.*, faculties.fac_name, universities.uni_name 
-        FROM majors 
-        LEFT JOIN faculties ON majors.fac_id = faculties.id 
-        LEFT JOIN universities ON faculties.uni_id = universities.uni_id 
-        WHERE majors.id = ?";
-
-$stmt = $conn->prepare($sql);
-$stmt->bind_param("i", $id);
-$stmt->execute();
-$result = $stmt->get_result();
-$row = $result->fetch_assoc();
-
-// 3. ถ้าไม่เจอข้อมูล ให้แจ้งเตือน
-if (!$row) {
-    echo "<script>alert('ไม่พบข้อมูลสาขาวิชา ID: $id'); window.location.href='P2.php';</script>";
-    exit();
-}
+// แก้ไขบรรทัดนี้: ใช้ j.job_name ให้ตรงกับ Database ของคุณ
+// เปลี่ยน j.job_name เป็น j.title
+$job_res = $conn->query("SELECT j.id, j.title 
+                         FROM major_jobs mj
+                         JOIN jobs j ON mj.job_id = j.id
+                         WHERE mj.major_id = $id");
 ?>
 <!DOCTYPE html>
 <html lang="th">
@@ -49,30 +42,27 @@ if (!$row) {
     </nav>
 
     <main class="max-w-6xl mx-auto px-6 py-12">
-        
-        <div class="flex flex-col md:flex-row gap-10 items-end mb-16">
-            <div class="flex-1">
-                <span class="px-3 py-1 bg-[#B1081C]/10 text-[#B1081C] text-[10px] font-bold rounded-full uppercase tracking-widest"><?= $row['fac_name'] ?></span>
-                <h1 class="text-5xl font-extrabold mt-4 leading-tight">
-    <?= $row['major_name'] ?> <br>
-    <span class="gradient-text"><?= $row['uni_name'] ?></span>
-</h1>
-<p class="mt-6 text-gray-500 max-w-lg leading-relaxed">
-    <?= $row['major_description'] ?>
-</p>
-</p>
-</p>
-    </div> <div class="flex gap-4">
+    
+    <div class="flex flex-col md:flex-row gap-10 items-end mb-16">
+        <div class="flex-1">
+            <span class="px-3 py-1 bg-[#B1081C]/10 text-[#B1081C] text-[10px] font-bold rounded-full uppercase tracking-widest"><?= $major['fac_name'] ?></span>
+            <h1 class="text-5xl font-extrabold mt-4 leading-tight"><?= $major['major_name'] ?> <br><span class="gradient-text"><?= $major['uni_name'] ?></span></h1>
+            <p class="mt-6 text-gray-500 max-w-lg leading-relaxed"><?= $major['major_description'] ?></p>
+        </div>
+        <div class="flex gap-4">
             <div class="text-center px-8 py-4 bg-white border rounded-3xl shadow-sm">
                 <p class="text-[10px] text-gray-400 font-bold uppercase">รับสมัครรอบที่</p>
-                <p class="text-2xl font-black text-[#B1081C]"><?= $row['round_open'] ?? '1' ?></p>
+                <p class="text-2xl font-black text-[#B1081C]"><?= $major['round_open'] ?></p>
             </div>
             <div class="text-center px-8 py-4 bg-[#1a1a1a] text-white rounded-3xl shadow-xl">
                 <p class="text-[10px] text-gray-400 font-bold uppercase">จำนวนที่รับ</p>
-                <p class="text-2xl font-black text-white"><?= $row['seats'] ?> <span class="text-xs font-light">ที่นั่ง</span></p>
+                <p class="text-2xl font-black text-white"><?= $major['seats'] ?> <span class="text-xs font-light">ที่นั่ง</span></p>
             </div>
         </div>
-    </div> <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16">
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16">
+        
         <div class="bg-white p-8 rounded-[2rem] border border-gray-100 shadow-xl shadow-gray-50 flex flex-col justify-between group relative overflow-hidden">
             <div class="absolute -right-6 -top-6 w-24 h-24 bg-[#B1081C]/5 rounded-full group-hover:scale-150 transition-transform duration-700"></div>
             <div>
@@ -82,17 +72,17 @@ if (!$row) {
                 <ul class="space-y-4">
                     <li class="flex flex-col">
                         <span class="text-[10px] text-gray-400 font-bold uppercase">แผนการเรียนที่รับ</span>
-                        <span class="text-sm font-bold text-gray-700"><?= $row['plan_accept'] ?? 'ไม่ระบุ' ?></span>
+                        <span class="text-sm font-bold text-gray-700"><?= $major['plan_accept'] ?></span>
                     </li>
                     <li class="flex flex-col">
                         <span class="text-[10px] text-gray-400 font-bold uppercase">เกรดเฉลี่ย (GPAX)</span>
-                        <span class="text-2xl font-black tracking-tighter text-[#1a1a1a]"><?= $row['gpax_min'] ?>+</span>
+                        <span class="text-2xl font-black tracking-tighter text-[#1a1a1a]"><?= $major['gpax_min'] ?>+</span>
                     </li>
                 </ul>
             </div>
             <div class="mt-8 p-4 bg-gray-50 rounded-2xl border-l-4 border-amber-400">
                 <p class="text-[10px] text-amber-600 font-bold uppercase">Condition</p>
-                <p class="text-[11px] text-gray-500 leading-tight"><?= $row['condition_text'] ?? 'สำเร็จการศึกษา ม.6 หรือเทียบเท่า' ?></p>
+                <p class="text-[11px] text-gray-500 leading-tight"><?= $major['condition_text'] ?></p>
             </div>
         </div>
 
@@ -107,47 +97,41 @@ if (!$row) {
             <div class="space-y-6">
                 <div>
                     <div class="flex justify-between text-sm mb-2">
-                        <span class="font-bold text-gray-600">TGAT (ความถนัดทั่วไป)</span>
-                        <span class="font-black text-[#B1081C]"><?= $row['score_tgat'] ?>%</span>
+                        <span class="font-bold text-gray-800">TGAT (%)</span>
+                        <span class="font-black text-[#B1081C]"><?= $major['score_tgat'] ?>%</span>
                     </div>
-                    <div class="w-full bg-gray-50 h-2.5 rounded-full overflow-hidden border border-gray-100">
-                        <div class="bg-gradient-to-r from-[#B1081C] to-[#ff4d5a] h-full rounded-full transition-all duration-1000" style="width: <?= $row['score_tgat'] ?>%;"></div>
-                    </div>
-                </div>
-
-                <div>
-                    <div class="flex justify-between text-sm mb-2">
-                        <span class="font-bold text-gray-600">TPAT 3 (ความถนัดด้านวิทย์-วิศวะ)</span>
-                        <span class="font-black text-[#B1081C]"><?= $row['score_tpat3'] ?>%</span>
-                    </div>
-                    <div class="w-full bg-gray-50 h-2.5 rounded-full overflow-hidden border border-gray-100">
-                        <div class="bg-gradient-to-r from-[#B1081C] to-[#ff4d5a] h-full rounded-full transition-all duration-1000" style="width: <?= $row['score_tpat3'] ?>%;"></div>
+                    <div class="w-full bg-gray-100 h-2.5 rounded-full overflow-hidden border border-gray-200">
+                        <div class="bg-gradient-to-r from-[#B1081C] to-[#ff4d5a] h-full rounded-full" style="width: <?= $major['score_tgat'] ?>%"></div>
                     </div>
                 </div>
 
                 <div>
                     <div class="flex justify-between text-sm mb-2">
-                        <span class="font-bold text-gray-600">A-Level</span>
-                        <span class="font-black text-[#B1081C]"><?= $row['score_tpat3'] ?>%</span>
+                        <span class="font-bold text-gray-800">TPAT 3 (%)</span>
+                        <span class="font-black text-[#B1081C]"><?= $major['score_tpat3'] ?>%</span>
                     </div>
-                    <div class="w-full bg-gray-50 h-2.5 rounded-full overflow-hidden border border-gray-100">
-                        <div class="bg-gradient-to-r from-[#B1081C] to-[#ff4d5a] h-full rounded-full transition-all duration-1000" style="width: <?= $row['score_tpat3'] ?>%;"></div>
+                    <div class="w-full bg-gray-100 h-2.5 rounded-full overflow-hidden border border-gray-200">
+                        <div class="bg-gradient-to-r from-[#B1081C] to-[#ff4d5a] h-full rounded-full" style="width: <?= $major['score_tpat3'] ?>%"></div>
                     </div>
                 </div>
 
-                       <div>
+                <div>
                     <div class="flex justify-between text-sm mb-2">
-                        <span class="font-bold text-gray-600">A-Level</span>
-                        <span class="font-black text-[#B1081C]"><?= $row['score_tpat3'] ?>%</span>
+                        <span class="font-bold text-gray-800">TGAT 2 (%)</span>
+                        <span class="font-black text-[#B1081C]"><?= $major['score_tgat2'] ?>%</span>
                     </div>
-                    <div class="w-full bg-gray-50 h-2.5 rounded-full overflow-hidden border border-gray-100">
-                        <div class="bg-gradient-to-r from-[#B1081C] to-[#ff4d5a] h-full rounded-full transition-all duration-1000" style="width: <?= $row['score_tpat3'] ?>%;"></div>
+                    <div class="w-full bg-gray-100 h-2.5 rounded-full overflow-hidden border border-gray-200">
+                        <div class="bg-gradient-to-r from-[#B1081C] to-[#ff4d5a] h-full rounded-full" style="width: <?= $major['score_tgat2'] ?>%"></div>
                     </div>
                 </div>
 
-                       
-                            <div class="bg-gray-400 h-full rounded-full transition-all duration-1000" style="width: <?= $row['score_alevel_phy'] ?>%;"></div>
-                        </div>
+                <div>
+                    <div class="flex justify-between text-sm mb-2">
+                        <span class="font-bold text-gray-800">TPAT 1 (%)</span>
+                        <span class="font-black text-[#B1081C]"><?= $major['score_tpat1'] ?>%</span>
+                    </div>
+                    <div class="w-full bg-gray-100 h-2.5 rounded-full overflow-hidden border border-gray-200">
+                        <div class="bg-gradient-to-r from-[#B1081C] to-[#ff4d5a] h-full rounded-full" style="width: <?= $major['score_tpat1'] ?>%"></div>
                     </div>
                 </div>
             </div>
@@ -156,77 +140,98 @@ if (!$row) {
 
     <div class="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
         <div class="space-y-8">
+            
             <div>
                 <h2 class="text-3xl font-black mb-4">ต้องเตรียมตัวยังไง?</h2>
-                <p class="text-gray-500 leading-relaxed">สำหรับน้องๆ ที่สนใจเข้าสาขานี้...</p>
+                <p class="text-gray-500 leading-relaxed">สำหรับน้องๆ ที่สนใจเข้าสาขานี้ นอกจากการอ่านหนังสือสอบแล้ว การเตรียมพื้นฐานตามที่สาขากำหนดจะช่วยให้มึงมีโอกาสสำเร็จมากขึ้น</p>
             </div>
             
             <div class="space-y-4">
                 <div class="flex items-start space-x-4">
                     <div class="w-10 h-10 shrink-0 bg-[#B1081C] rounded-xl flex items-center justify-center text-white font-bold">1</div>
                     <div>
-                        <p class="font-bold">คณิตศาสตร์และฟิสิกส์</p>
-                        <p class="text-sm text-gray-500"><?= $row['prep_math_text'] ?: 'ไม่มีข้อมูลข้อแนะนำ' ?></p>
+                        <p class="font-bold">ข้อแนะนำข้อที่ 1</p>
+                        <p class="text-sm text-gray-500"><?= $major['prep_math'] ?></p>
                     </div>
                 </div>
                 <div class="flex items-start space-x-4">
                     <div class="w-10 h-10 shrink-0 bg-[#1a1a1a] rounded-xl flex items-center justify-center text-white font-bold">2</div>
                     <div>
-                        <p class="font-bold">ทักษะโปรแกรมมิ่ง / Logic</p>
-                        <p class="text-sm text-gray-500"><?= $row['prep_prog_text'] ?: 'ไม่มีข้อมูลข้อแนะนำ' ?></p>
+                        <p class="font-bold">ข้อแนะนำข้อที่ 2</p>
+                        <p class="text-sm text-gray-500"><?= $major['prep_prog'] ?></p>
                     </div>
                 </div>
             </div>
         </div>
-       <div class="bg-[#1a1a1a] p-8 rounded-[3rem] text-white relative overflow-hidden">
+
+      <div class="bg-[#1a1a1a] p-8 rounded-[3rem] text-white relative overflow-hidden">
     <h4 class="text-[#B1081C] font-black tracking-widest text-[10px] uppercase mb-4">Career Projection</h4>
     <h3 class="text-xl font-bold mb-8">โอกาสในการประกอบอาชีพ</h3>
     
-   <?php 
-  // แก้ชื่อคอลัมน์ให้ตรง DB และลบเงา (shadow) ออก
-  $demand = $row['career_demand'] ?? 'กลาง'; 
-  
-  if ($demand == 'สูง' || $demand == 'สูงมาก') { 
-      $w = '100%'; 
-      $c = 'bg-emerald-500'; // ลบ shadow ออกแล้ว เหลือแค่สีเขียวเพียวๆ
-      $txt = 'สูงที่สุด'; 
-  } elseif ($demand == 'กลาง') { 
-      $w = '50%';  
-      $c = 'bg-yellow-500'; 
-      $txt = 'ปานกลาง';
-  } else { 
-      $w = '25%';  
-      $c = 'bg-red-500'; 
-      $txt = 'ต่ำ';
-  }
-?>
-
-
-    <div class="mt-6 p-5 bg-white rounded-3xl border border-gray-100 shadow-sm mb-6">
-        <div class="flex justify-between items-center mb-3">
-            <span class="text-xs font-black uppercase tracking-widest text-gray-400">Market Demand</span>
-            <span class="text-sm font-bold text-gray-800"><?= $txt ?></span>
+    <div class="space-y-8">
+        <div>
+            <?php 
+                // 1. ดึงตัวเลขจากอัตราการได้งานมาคำนวณหลอด (สมมติใน DB คือ "85%")
+                $job_rate_num = intval($major['career_job_rate']); 
+                
+                // 2. Logic เลือกสีหลอด (แดง -> เหลือง -> เขียว) ตามความเข้มข้น %
+                if ($job_rate_num <= 40) {
+                    $bar_gradient = "from-red-600 to-red-400";
+                } elseif ($job_rate_num <= 75) {
+                    $bar_gradient = "from-yellow-500 to-orange-400"; // ช่วงกลางๆ
+                } else {
+                    $bar_gradient = "from-green-500 to-emerald-400"; // ช่วงเขียวฉ่ำ
+                }
+            ?>
+            <div class="flex justify-between items-end mb-2">
+                <span class="text-sm font-bold text-gray-300">ความต้องการในตลาดแรงงาน</span>
+                <span class="text-2xl font-black text-[#B1081C]"><?= $major['career_demand'] ?></span>
+            </div>
+            
+            <div class="w-full bg-white/5 h-2 rounded-full overflow-hidden">
+                <div class="bg-gradient-to-r <?= $bar_gradient ?> h-full transition-all duration-1000 ease-out shadow-lg" 
+                     style="width: <?= $job_rate_num ?>%"></div>
+            </div>
         </div>
-        <div class="w-full bg-gray-100 rounded-full h-4 p-1">
-            <div class="<?= $c ?> h-full rounded-full transition-all duration-1000" style="width: <?= $w ?>;"></div>
-        </div>
-    </div>
 
-    <div class="grid grid-cols-2 gap-4">
-        <div class="p-4 bg-white/5 rounded-2xl border border-white/10">
-            <p class="text-[10px] text-gray-500 uppercase font-bold">รายได้เฉลี่ยเริ่มต้น</p>
-            <p class="text-xl font-black"><?= $row['career_salary'] ?: 'ไม่ระบุ' ?></p>
+        <div class="grid grid-cols-2 gap-4">
+            <div class="p-4 bg-white/5 rounded-2xl border border-white/10">
+                <p class="text-[10px] text-gray-500 uppercase font-bold">รายได้เฉลี่ยเริ่มต้น</p>
+                <p class="text-xl font-black"><?= $major['career_salary'] ?></p>
+            </div>
+            <div class="p-4 bg-white/5 rounded-2xl border border-white/10">
+                <p class="text-[10px] text-gray-500 uppercase font-bold">อัตราการได้งาน</p>
+                <p class="text-xl font-black"><?= $major['career_job_rate'] ?></p>
+            </div>
         </div>
-        <div class="p-4 bg-white/5 rounded-2xl border border-white/10">
-            <p class="text-[10px] text-gray-500 uppercase font-bold">อัตราการได้งาน</p>
-            <p class="text-xl font-black"><?= $row['career_job_rate'] ?: 'ไม่ระบุ' ?></p>
+
+        <div class="pt-4">
+            <p class="text-[10px] text-gray-500 uppercase font-bold mb-3">สายงานที่เกี่ยวข้อง</p>
+            <div class="flex flex-wrap gap-2">
+            <?php 
+            if ($job_res && $job_res->num_rows > 0): 
+                while($job = $job_res->fetch_assoc()): 
+            ?>
+                <a href="P13.php?id=<?= $job['id'] ?>&from_major=<?= $_GET['id'] ?>" 
+   class="px-3 py-1.5 bg-white/10 hover:bg-[#B1081C] border border-white/20 rounded-lg text-[11px] font-medium transition-all duration-300 flex items-center group">
+    
+    <?= $job['title'] ?> 
+
+    <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 ml-1.5 opacity-50 group-hover:opacity-100" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+    </svg>
+</a>
+            <?php 
+                endwhile; 
+            endif; 
+            ?>
+            </div>
         </div>
     </div>
 </div>
+</main>
 
-    </main>
-
-    <style>
+   <style>
     /* คอนเทนเนอร์หลัก */
     .ultra-footer {
         background: #0a0a0a;
@@ -662,10 +667,10 @@ if (!$row) {
                 <div class="title-box">
                     <h3 class="inner-title">JOBS</h3>
                     <ul class="footer-sub-links">
-                        <li><a href="P1.php">Software Developer</a></li>
-                        <li><a href="P1.php">Data Science</a></li>
-                        <li><a href="P1.php">Digital Marketing</a></li>
-                        <li><a href="P1.php">Engineering</a></li>
+                        <li><a href="P13.php?id=14">Security Engineer</a></li>
+                        <li><a href="P13.php?id=15">Data Engineer</a></li>
+                        <li><a href="P13.php?id=19">นักบริหารความเสี่ยงทางการเงิน</a></li>
+                        <li><a href="P13.php?id=16">ศัลยแพทย์หัวใจและทรวงอก</a></li>
                     </ul>
                 </div>
             </div>
@@ -675,10 +680,10 @@ if (!$row) {
                 <div class="title-box">
                     <h3 class="inner-title">CAMPUS</h3>
                     <ul class="footer-sub-links">
-                        <li><a href="P2.php">Chulalongkorn</a></li>
-                        <li><a href="P2.php">Thammasat</a></li>
-                        <li><a href="P2.php">Kasetsart</a></li>
-                        <li><a href="P2.php">Mahidol</a></li>
+                        <li><a href="P21.php?uni_id=14">มหาวิทยาลัยธรรมศาสตร์</a></li>
+                        <li><a href="P21.php?uni_id=14">มหาวิทยาลัยธรรมศาสตร์</a></li>
+                        <li><a href="P21.php?uni_id=14">มหาวิทยาลัยธรรมศาสตร์</a></li>
+                        <li><a href="P21.php?uni_id=14">มหาวิทยาลัยธรรมศาสตร์</a></li>
                     </ul>
                 </div>
             </div>
@@ -688,10 +693,10 @@ if (!$row) {
                 <div class="title-box">
                     <h3 class="inner-title">TRENDS</h3>
                     <ul class="footer-sub-links">
-                        <li><a href="#">Salary Guide 2026</a></li>
-                        <li><a href="#">Future Skills</a></li>
-                        <li><a href="#">AI Roadmap</a></li>
-                        <li><a href="#">Interview Tips</a></li>
+                        <li><a href="P21.php?uni_id=14">มหาวิทยาลัยธรรมศาสตร์</a></li>
+                        <li><a href="P13.php?id=15">Data Engineer</a></li>
+                        <li><a href="P13.php?id=14">Security Engineer</a></li>
+                        <li><a href="P13.php?id=16">ศัลยแพทย์หัวใจและทรวงอก</a></li>
                     </ul>
                 </div>
             </div>
@@ -701,10 +706,8 @@ if (!$row) {
                 <div class="title-box">
                     <h3 class="inner-title">SUPPORT</h3>
                     <ul class="footer-sub-links">
-                        <li><a href="#">About Us</a></li>
-                        <li><a href="#">Contact Support</a></li>
-                        <li><a href="#">Privacy Policy</a></li>
-                        <li><a href="#">Join Community</a></li>
+                        <li><a href="http://www.svc.ac.th/th/">About Us</a></li>
+                     
                     </ul>
                 </div>
             </div>
